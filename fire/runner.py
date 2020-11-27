@@ -146,7 +146,7 @@ class FireRunner():
             print_epoch_total = str(self.cfg['epochs'])+''.join([' ']*(4-len(str(self.cfg['epochs']))))
             if batch_idx % self.cfg['log_interval'] == 0:
                 print('\r',
-                    '{}/{} [{}/{} ({:.0f}%)] - ETA: {},  loss: {:.4f}, acc: {:.4f} '.format(
+                    '{}/{} [{}/{} ({:.0f}%)] - ETA: {}, loss: {:.4f}, acc: {:.4f} '.format(
                     print_epoch, print_epoch_total, batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), 
                     datetime.timedelta(seconds=eta),

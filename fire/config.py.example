@@ -1,40 +1,54 @@
-
+# @https://github.com/fire717/Fire
 
 cfg = {
-    "model_name": "mobilenetv3",
-    #mobilenetv3 
-    "img_size": 224,
-    'GPU_ID': '0',
+    ### Global Set
+    "model_name": "mobilenetv3",  
+    #mobilenetv3 adv-efficientnet-b2 se_resnext50_32x4d  xception resnext101_32x8d_wsl
+    'GPU_ID': '1',
     "class_number": 2,
 
-    #train
-    'train_path':"../data/dataset/d_trainval/v8/train",
-    'val_path':"",
-    'batch_size':256,
-    'early_stop_patient':26,
-    'learning_rate':0.001,
-    'epochs':35,
-    'save_start_epoch':0,
-    "k_flod":10,
-    'optims':'adam',  #adam  SGD AdaBelief Ranger
-    'schedu':'SGDR-5-2', #default  SGDR-5-2  CVPR   step-4-0.8
-    'use_warmup':0,
-    'weight_decay' : 0.0001,
-    'use_distill':0,
-    'label_smooth':0,
-    'model_path':None,
-    'start_fold':0,
-    'break_fold':True,
-    'pretrained':'./model/mobilenetv3_small_67.4.pth.tar', #path or ''
-
-    #test
-    'test_path':"../data/dataset/e_test",#_resize_rotate
-    'use_TTA':0,
-    'test_batch_size': 4,
-
-    #fixed
-    "save_dir": "save/",
     "random_seed":42,
     "cfg_verbose":True,
     "num_workers":4,
+
+
+    ### Train Setting
+    'train_path':"../data/dataset/d_trainval/v8/train",
+    'label_type': 'DIR',# path or 'DIR' mean label by dir name
+    'label_path': '',# if 'DIR' quale  train_path
+    'val_path':"",
+    'pretrained':'pretrained/mobilenetv3_small_67.4.pth.tar', #path or ''
+    'log_interval':10,
+    'try_to_train_items': 0,   # 0   
+    'save_best_only': True,
+    "save_dir": "output/",
+    'pin_memory': True,
+
+
+    ### Train Hyperparameters
+    "img_size": [224, 224], # [h, w]
+    'learning_rate':0.001,
+    'batch_size':16,
+    'epochs':31,
+    'optimizer':'Ranger',  #Adam  SGD AdaBelief Ranger
+    'scheduler':'SGDR-5-2', #default  SGDR-5-2  CVPR   step-4-0.8
+
+    'warmup_epoch':0, # 
+    'weight_decay' : 0.0001,
+    "k_flod":10,
+    'start_fold':0,
+    'early_stop_patient':26,
+
+    'use_distill':0,
+    'label_smooth':0,
+    'checkpoint':None,
+    'class_weight': [1.8, 1], # None
+    'clip_gradient': 1,       # 0
+
+
+    ### Test
+    'test_path':"../data/dataset/e_test",#_resize_rotate
+    'use_TTA':0,
+    'test_batch_size': 4,
+    
     }

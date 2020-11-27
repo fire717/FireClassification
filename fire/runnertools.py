@@ -1,5 +1,5 @@
 import torch.optim as optim
-
+from fire.ranger import Ranger 
 
 def getSchedu(schedu, optimizer):
     if schedu=='default':
@@ -17,7 +17,7 @@ def getSchedu(schedu, optimizer):
     return scheduler
 
 def getOptimizer(optims, model, learning_rate, weight_decay):
-    if optims=='adam':
+    if optims=='Adam':
         optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     elif optims=='SGD':
         optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay)

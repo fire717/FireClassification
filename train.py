@@ -18,6 +18,7 @@ def main(cfg):
     
 
     data = FireData(cfg)
+    #data.showTrainData()
     train_loader, val_loader = data.getTrainValDataloader()
 
 
