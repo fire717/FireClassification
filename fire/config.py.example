@@ -1,0 +1,40 @@
+
+
+cfg = {
+    "model_name": "mobilenetv3",
+    #mobilenetv3 
+    "img_size": 224,
+    'GPU_ID': '0',
+    "class_number": 2,
+
+    #train
+    'train_path':"../data/dataset/d_trainval/v8/train",
+    'val_path':"",
+    'batch_size':256,
+    'early_stop_patient':26,
+    'learning_rate':0.001,
+    'epochs':35,
+    'save_start_epoch':0,
+    "k_flod":10,
+    'optims':'adam',  #adam  SGD AdaBelief Ranger
+    'schedu':'SGDR-5-2', #default  SGDR-5-2  CVPR   step-4-0.8
+    'use_warmup':0,
+    'weight_decay' : 0.0001,
+    'use_distill':0,
+    'label_smooth':0,
+    'model_path':None,
+    'start_fold':0,
+    'break_fold':True,
+    'pretrained':'./model/mobilenetv3_small_67.4.pth.tar', #path or ''
+
+    #test
+    'test_path':"../data/dataset/e_test",#_resize_rotate
+    'use_TTA':0,
+    'test_batch_size': 4,
+
+    #fixed
+    "save_dir": "save/",
+    "random_seed":42,
+    "cfg_verbose":True,
+    "num_workers":4,
+    }

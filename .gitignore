@@ -1,0 +1,15 @@
+__pycache__
+*.jpg
+*.png
+*.zip
+*.rar
+*.log
+*.onnx
+*.bak
+*.pth
+
+/fire/__pycache__
+/config.py
+/data
+/pretrained
+/output

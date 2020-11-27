@@ -1,0 +1,11 @@
+json
+numpy
+pandas
+opencv-python
+torch==1.6.0
+torchvisson==0.7.0
+tensorboard==2.4.0
+efficientnet_pytorch
+scikit-learn
+pretrainedmodels
+albumentations
