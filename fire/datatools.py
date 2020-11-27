@@ -1,6 +1,7 @@
-
+ 
 from PIL import Image
 import numpy as np
+import pandas as pd
 import os
 import torch
 from torch.utils.data.dataset import Dataset
@@ -125,8 +126,15 @@ class TensorDatasetTrainClassify(Dataset):
                 self.label_dict[img_path] = y
 
         # User code here
-        elif self.label_type == "xxx":
-            pass
+        elif self.label_type == "CSV":
+            df = pd.read_csv(self.label_path)
+            dir_path = os.path.dirname(self.train_jpg[0])
+            for index, row in df.iterrows():
+                #print(row["image_id"], type(row["label"]))
+                img_path = os.path.join(dir_path, row["image_id"])
+                #print(dir_path,img_path)
+                self.label_dict[img_path] = row["label"]
+                #b
 
         else:
             raise Exception("[ERROR] In datatools.py getLabel() reimplement needed. ")
@@ -215,19 +223,19 @@ def getDataLoader(mode, input_data, cfg):
         
         train_loader = torch.utils.data.DataLoader(
                     my_dataloader(input_data[0],transforms.Compose([
-                                TrainDataAug(img_size, img_size),
+                                TrainDataAug(cfg['img_size']),
                                 transforms.ToTensor(),
                                 my_normalize,
                                 ])),
-                        batch_size=batch_size, shuffle=True, num_workers=kwargs['num_workers'], pin_memory=True)
+                        batch_size=batch_size, shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
 
         val_loader = torch.utils.data.DataLoader(
                     my_dataloader(input_data[1],transforms.Compose([
-                                TestDataAug(img_size, img_size),
+                                TestDataAug(cfg['img_size']),
                                 transforms.ToTensor(),
                                 my_normalize
                                 ])),
-                        batch_size=1, shuffle=False, num_workers=kwargs['num_workers'], pin_memory=True)
+                        batch_size=1, shuffle=False, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
         return train_loader, val_loader
 
 
@@ -242,7 +250,7 @@ def getDataLoader(mode, input_data, cfg):
                                     my_normalize
                                 ])
                 ), batch_size=batch_size, shuffle=False, 
-                num_workers=kwargs['num_workers'], pin_memory=kwargs['pin_memory']
+                num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory']
             )
 
         return test_loader
@@ -256,14 +264,13 @@ def getDataLoader(mode, input_data, cfg):
         #from .autoaugment import ImageNetPolicy
         # from libs.FastAutoAugment.data import  Augmentation
         # from libs.FastAutoAugment.archive import fa_resnet50_rimagenet
-        label_path = cfg['label_path']
-        if cfg['label_type'] == 'DIR':
-            label_path = cfg['train_path']
+        if cfg['label_path'] == 'DIR':
+            cfg['label_path'] = cfg['train_path']
 
         train_loader = torch.utils.data.DataLoader(
                                 my_dataloader(input_data[0],
                                             cfg['label_type'],
-                                            label_path,
+                                            cfg['label_path'],
                                             transforms.Compose([
                                                 TrainDataAug(cfg['img_size']),
                                                 #ImageNetPolicy(),  #autoaug
@@ -276,7 +283,7 @@ def getDataLoader(mode, input_data, cfg):
         val_loader = torch.utils.data.DataLoader(
                                 my_dataloader(input_data[1],
                                             cfg['label_type'],
-                                            label_path,
+                                            cfg['label_path'],
                                             transforms.Compose([
                                                 TestDataAug(cfg['img_size']),
                                                 transforms.ToTensor(),

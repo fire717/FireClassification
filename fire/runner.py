@@ -33,8 +33,10 @@ class FireRunner():
 
     
         # loss
-
-        weight_loss = torch.DoubleTensor(self.cfg['class_weight']).to(self.device)
+        if self.cfg['class_weight']:
+            weight_loss = torch.DoubleTensor(self.cfg['class_weight']).to(self.device)
+        else:
+            weight_loss = torch.DoubleTensor([1]*self.cfg['class_number']).to(self.device)
         self.loss_func = torch.nn.CrossEntropyLoss(weight=weight_loss).to(self.device)
         #self.loss_func = CrossEntropyLossOneHot().to(self.device)
         
@@ -207,15 +209,17 @@ class FireRunner():
         labels = np.array(labels)
         #print(pres.shape, labels.shape)
 
-
-
-
-        precision, recall, f1_score = getF1(pres, labels)
-
         self.val_loss /= len(val_loader.dataset)
         self.val_acc =  self.correct / len(val_loader.dataset)
-        print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}%, precision: {:.5f}, recall: {:.5f}, f1_score: {:.5f}\n'.format(
-            self.val_loss, 100. * self.val_acc, precision, recall, f1_score))
+
+        if 'F1' in self.cfg['metrics']:
+            precision, recall, f1_score = getF1(pres, labels)
+            print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}%, precision: {:.5f}, recall: {:.5f}, f1_score: {:.5f}\n'.format(
+                self.val_loss, 100. * self.val_acc, precision, recall, f1_score))
+
+        else:
+            print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}% \n'.format(
+                self.val_loss, 100. * self.val_acc))
 
 
 
