@@ -26,6 +26,7 @@ Read the documentation at source code.
 * SGDR
 
 ### 4.其他
+* Metric(acc, F1)
 * 训练日志保存
 * 交叉验证
 * 梯度裁剪
@@ -34,12 +35,9 @@ Read the documentation at source code.
 ### 
 
 ## 三、To Do
-- [x] Earlystop
-- [x] Metric(acc, F1)
-- [x] 增加使用文档
-- [ ] 完善Readme
-- [ ] tensorboard可视化
-- [ ] 特征图热力图可视化
+* 完善Readme
+* tensorboard可视化
+* 特征图热力图可视化
 
 ## 四、参考资源
 1. [pretrained-models.pytorch](https://github.com/Cadene/pretrained-models.pytorch)
