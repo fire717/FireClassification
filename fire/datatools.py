@@ -13,7 +13,7 @@ import albumentations as A
 import json
 import platform
 
-
+from fire.dataaug_user import TrainDataAug, TestDataAug
 
 
 ##### Common
@@ -26,76 +26,9 @@ def getFileNames(file_dir, tail_list=['.png','.jpg','.JPG','.PNG']):
         return L
 
 
-###### 1.Data aug
-class TrainDataAug:
-    def __init__(self, img_size):
-        self.h = img_size[0]
-        self.w = img_size[1]
-
-    def __call__(self, img):
-        # opencv img, BGR
-        # new_width, new_height = self.size[0], self.size[1]
-        img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-        raw_h, raw_w = img.shape[:2]
-        min_size = max(img.shape[:2])
 
 
-  
-        img = A.ShiftScaleRotate(
-                                shift_limit=0.1,
-                                scale_limit=0.1,
-                                rotate_limit=10,
-                                interpolation=cv2.INTER_LINEAR,
-                                border_mode=cv2.BORDER_CONSTANT,
-                                 value=0, mask_value=0,
-                                p=0.5)(image=img)['image']
-
-        img = A.HorizontalFlip(p=0.5)(image=img)['image'] 
-        
-        img = A.OneOf([A.RandomBrightness(limit=0.1, p=1), 
-                    A.RandomContrast(limit=0.1, p=1),
-                    A.RandomGamma(gamma_limit=(50, 150),p=1),
-                    A.HueSaturationValue(hue_shift_limit=10, 
-                        sat_shift_limit=10, val_shift_limit=10,  p=1)], 
-                    p=0.6)(image=img)['image']
-
-        
-        img = A.Resize(self.h,self.w,p=1)(image=img)['image']
-        img = A.OneOf([A.MotionBlur(blur_limit=3, p=0.2), 
-                        A.MedianBlur(blur_limit=3, p=0.2), 
-                        A.GaussianBlur(blur_limit=3, p=0.1),
-                        A.GaussNoise(var_limit=(10.0, 50.0), mean=0, p=0.5)], 
-                        p=0.8)(image=img)['image']
-
-        img = A.CoarseDropout(max_holes=3, max_height=20, max_width=20, 
-                            p=1)(image=img)['image']
-
-
-
-        
-        img = Image.fromarray(img)
-        return img
-
-
-class TestDataAug:
-    def __init__(self, img_size):
-        self.h = img_size[0]
-        self.w = img_size[1]
-
-    def __call__(self, img):
-        # opencv img, BGR
-        # new_width, new_height = self.size[0], self.size[1]
-        
-        img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-
-
-        img = A.Resize(self.h,self.w,p=1)(image=img)['image']
-        img = Image.fromarray(img)
-        return img
-
-
-
-######## 2.dataloader
+######## dataloader
 
 
 
