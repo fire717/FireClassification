@@ -2,10 +2,10 @@
 
 cfg = {
     ### Global Set
-    "model_name": "mobilenetv3",  
+    "model_name": "adv-efficientnet-b0",  
     #mobilenetv3 adv-efficientnet-b2 se_resnext50_32x4d  xception resnext101_32x8d_wsl
-    'GPU_ID': '1',
-    "class_number": 2,
+    'GPU_ID': '0',
+    "class_number": 5,
 
     "random_seed":42,
     "cfg_verbose":True,
@@ -13,16 +13,17 @@ cfg = {
 
 
     ### Train Setting
-    'train_path':"../data/dataset/d_trainval/v8/train",
-    'label_type': 'DIR',# path or 'DIR' mean label by dir name
-    'label_path': '',# if 'DIR' quale  train_path
+    'train_path':"../data/train_images",
+    'label_type': 'CSV',# path or 'DIR' mean label by dir name
+    'label_path': '../data/train.csv',# if 'DIR' quale  train_path
     'val_path':"",
-    'pretrained':'pretrained/mobilenetv3_small_67.4.pth.tar', #path or ''
+    'pretrained':'pretrained/adv-efficientnet-b0-b64d5a18.pth', #path or ''
     'log_interval':10,
-    'try_to_train_items': 0,   # 0   
+    'try_to_train_items': 1000,   # 0   
     'save_best_only': True,
     "save_dir": "output/",
     'pin_memory': True,
+    'metrics': [''], # default is acc,  can add F1  ...
 
 
     ### Train Hyperparameters
@@ -31,7 +32,7 @@ cfg = {
     'batch_size':16,
     'epochs':31,
     'optimizer':'Ranger',  #Adam  SGD AdaBelief Ranger
-    'scheduler':'SGDR-5-2', #default  SGDR-5-2  CVPR   step-4-0.8
+    'scheduler':'SGDR-5-2', #default  SGDR-5-2     step-4-0.8
 
     'warmup_epoch':0, # 
     'weight_decay' : 0.0001,
@@ -42,7 +43,7 @@ cfg = {
     'use_distill':0,
     'label_smooth':0,
     'checkpoint':None,
-    'class_weight': [1.8, 1], # None
+    'class_weight': None, # None
     'clip_gradient': 1,       # 0
 
 

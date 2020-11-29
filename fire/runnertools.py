@@ -1,5 +1,7 @@
 import torch.optim as optim
 from fire.ranger import Ranger 
+import os
+import time
 
 def getSchedu(schedu, optimizer):
     if schedu=='default':
@@ -41,3 +43,31 @@ def clipGradient(optimizer, grad_clip=1):
         for param in group["params"]:
             if param.grad is not None:
                 param.grad.data.clamp_(-grad_clip, grad_clip)
+
+
+def writeLogs(cfg, 
+            best_epoch, 
+            early_stop_value, 
+            line_list=["model_name",
+                        "img_size",
+                        "learning_rate",
+                        "batch_size",
+                        "epochs",
+                        "optimizer",
+                        "scheduler",
+                        "warmup_epoch",
+                        "weight_decay",
+                        "k_flod",
+                        "start_fold"]):
+    # 可以自定义要保存的字段
+    log_path = os.path.join(cfg['save_dir'], 'log.csv')
+    if not os.path.exists(log_path):
+        with open(log_path, 'w', encoding='utf-8') as f:
+            line = ','.join(['timestamps']+line_list)+"\n"
+            f.write(line)
+
+    with open(log_path, 'a', encoding='utf-8') as f:
+
+        line_tmp = [int(time.time())] + ['-'.join([str(v) for v in cfg[x]]) if isinstance(cfg[x],list) else cfg[x] for x in line_list]
+        line = ','.join([str(x) for x in line_tmp])+"\n"
+        f.write(line)

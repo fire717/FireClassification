@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from fire.runnertools import getSchedu, getOptimizer, clipGradient
+from fire.runnertools import getSchedu, getOptimizer, clipGradient, writeLogs
 from fire.metrics import getF1
 from fire.scheduler import GradualWarmupScheduler
 from fire.utils import printDash
@@ -97,6 +97,7 @@ class FireRunner():
         self.last_save_path = None
 
         self.earlystop = False
+        self.best_epoch = 0
 
 
     def onTrainStep(self,train_loader, epoch):
@@ -163,6 +164,9 @@ class FireRunner():
 
 
     def onTrainEnd(self):
+
+        writeLogs(self.cfg,self.best_epoch,self.early_stop_value)
+
         del self.model
         gc.collect()
         torch.cuda.empty_cache()
@@ -254,11 +258,14 @@ class FireRunner():
 
         self.early_stop_dist+=1
         if self.early_stop_dist>self.cfg['early_stop_patient']:
-            print("[INFO] Early Stop with patient %d , best is Epoch - %d :%f" % (self.cfg['early_stop_patient'],epoch-self.cfg['early_stop_patient'],self.early_stop_value))
+            self.best_epoch = epoch-self.cfg['early_stop_patient']
+            print("[INFO] Early Stop with patient %d , best is Epoch - %d :%f" % (self.cfg['early_stop_patient'],self.best_epoch,self.early_stop_value))
             self.earlystop = True
         if  epoch+1==self.cfg['epochs']:
-            print("[INFO] Finish trainging , best is Epoch - %d :%f" % (epoch-self.early_stop_dist+2,self.early_stop_value))
+            self.best_epoch = epoch-self.early_stop_dist+2
+            print("[INFO] Finish trainging , best is Epoch - %d :%f" % (self.best_epoch,self.early_stop_value))
             self.earlystop = True
+
 
 
 

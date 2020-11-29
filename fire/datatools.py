@@ -14,6 +14,8 @@ import json
 import platform
 
 
+
+
 ##### Common
 def getFileNames(file_dir, tail_list=['.png','.jpg','.JPG','.PNG']): 
         L=[] 
@@ -98,7 +100,7 @@ class TestDataAug:
 
 
 class TensorDatasetTrainClassify(Dataset):
-
+    _print_times = 0
     def __init__(self, train_jpg, label_type, label_path, transform=None):
         self.train_jpg = train_jpg
         self.label_type = label_type
@@ -135,6 +137,10 @@ class TensorDatasetTrainClassify(Dataset):
                 #print(dir_path,img_path)
                 self.label_dict[img_path] = row["label"]
                 #b
+            if TensorDatasetTrainClassify._print_times==0:
+                print("[INFO] Labels count: ")
+                print(df['label'].value_counts().sort_index())
+                TensorDatasetTrainClassify._print_times=1
 
         else:
             raise Exception("[ERROR] In datatools.py getLabel() reimplement needed. ")

@@ -31,3 +31,4 @@ def setRandomSeed(seed=42):
 
 def printDash(num = 50):
     print(''.join(['-']*num))
+

@@ -26,6 +26,9 @@ def main(cfg):
     runner.train(train_loader, val_loader)
 
 
+    ## test
+    #test_loader = data.getTestDataloader()
+    #runner.test(test_loader)
 
 if __name__ == '__main__':
     main(cfg)
