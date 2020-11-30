@@ -13,3 +13,5 @@ __pycache__
 /data
 /pretrained
 /output
+
+/fire/dataaug_user.py
