@@ -87,8 +87,47 @@ class FireRunner():
 
         pass
 
-    def evaluate(self):
-        pass
+    def evaluate(self, data_loader):
+        self.model.eval()
+        correct = 0
+
+        with torch.no_grad():
+            pres = []
+            labels = []
+            for (data, target, img_names) in data_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                #print(target.shape)
+                output = self.model(data).double()
+
+
+                #print(output.shape)
+                pred_score = nn.Softmax(dim=1)(output)
+                #print(pred_score.shape)
+                pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+                if self.cfg['use_distill'] or self.cfg['label_smooth']>0:
+                    target = target.max(1, keepdim=True)[1] 
+                correct += pred.eq(target.view_as(pred)).sum().item()
+
+
+                batch_pred_score = pred_score.data.cpu().numpy().tolist()
+                batch_label_score = target.data.cpu().numpy().tolist()
+                pres.extend(batch_pred_score)
+                labels.extend(batch_label_score)
+
+        pres = np.array(pres)
+        labels = np.array(labels)
+        #print(pres.shape, labels.shape)
+
+        acc =  correct / len(data_loader.dataset)
+
+
+        print('[Info] acc: {:.3f}% \n'.format(100. * acc))
+
+        if 'F1' in self.cfg['metrics']:
+            precision, recall, f1_score = getF1(pres, labels)
+            print('      precision: {:.5f}, recall: {:.5f}, f1_score: {:.5f}\n'.format(
+                  precision, recall, f1_score))
+
 
 
     def onTrainStart(self):
@@ -338,3 +377,11 @@ class FireRunner():
 
     def modelSave(self):
         pass
+
+    def toOnnx(self, save_name= "model.onnx"):
+        dummy_input = torch.randn(1, 3, self.cfg['img_size'][0], self.cfg['img_size'][1]).to(self.device)
+
+        torch.onnx.export(self.model, 
+                        dummy_input, 
+                        os.path.join(self.cfg['save_dir'],save_name), 
+                        verbose=True)

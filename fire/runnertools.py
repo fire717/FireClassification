@@ -26,7 +26,7 @@ def getOptimizer(optims, model, learning_rate, weight_decay):
     elif optims=='AdaBelief':
         optimizer = AdaBelief(model.parameters(), lr=learning_rate, eps=1e-12, betas=(0.9,0.999))
     elif optims=='Ranger':
-        optimizer = Ranger(model.parameters(), lr=learning_rate)
+        optimizer = Ranger(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     return optimizer
 
 
