@@ -23,8 +23,9 @@ class FireModel(nn.Module):
     def forward(self, img):        
 
         if self.cfg['model_name']=="mobilenetv3":
+
             out = self.features(img)
-            # print(out.shape)
+
             out = out.mean(3).mean(2)        #best 99919
             #out = out.view(out.size(0), -1) #best 9990
             # print(out.shape)

@@ -52,6 +52,17 @@ class FireData():
         return train_loader, val_loader
 
 
+    def getTrainDataloader(self):
+        data_names = getFileNames(self.cfg['train_path'])
+        print("[INFO] Total images: ", len(data_names))
+
+        input_data = [data_names]
+        train_loader = getDataLoader("train", 
+                                        input_data,
+                                        self.cfg)
+        return train_loader
+
+
     def getTestDataloader(self):
         data_names = getFileNames(self.cfg['test_path'])
         input_data = [data_names]

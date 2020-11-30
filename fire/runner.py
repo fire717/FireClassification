@@ -92,6 +92,8 @@ class FireRunner():
 
 
     def onTrainStart(self):
+        
+
         self.early_stop_value = 0
         self.early_stop_dist = 0
         self.last_save_path = None
@@ -106,12 +108,11 @@ class FireRunner():
         correct = 0
         count = 0
         batch_time = 0
-        for batch_idx, (data, target) in enumerate(train_loader):
+        for batch_idx, (data, target, img_names) in enumerate(train_loader):
             one_batch_time_start = time.time()
             data, target = data.to(self.device), target.to(self.device)
 
-            # print(data.dtype, target.dtype)
-            # b
+
             output = self.model(data).double()
 
             #all_linear2_params = torch.cat([x.view(-1) for x in model.model_feature._fc.parameters()])
@@ -187,7 +188,7 @@ class FireRunner():
         with torch.no_grad():
             pres = []
             labels = []
-            for data, target in val_loader:
+            for (data, target, img_names) in val_loader:
                 data, target = data.to(self.device), target.to(self.device)
                 #print(target.shape)
                 output = self.model(data).double()
@@ -258,7 +259,7 @@ class FireRunner():
 
         self.early_stop_dist+=1
         if self.early_stop_dist>self.cfg['early_stop_patient']:
-            self.best_epoch = epoch-self.cfg['early_stop_patient']
+            self.best_epoch = epoch-self.cfg['early_stop_patient']+1
             print("[INFO] Early Stop with patient %d , best is Epoch - %d :%f" % (self.cfg['early_stop_patient'],self.best_epoch,self.early_stop_value))
             self.earlystop = True
         if  epoch+1==self.cfg['epochs']:
@@ -270,4 +271,70 @@ class FireRunner():
 
 
     def onTest(self):
+        self.model.eval()
+        
+        #predict
+        res_list = []
+        with torch.no_grad():
+            #end = time.time()
+            for i, (inputs, target, img_names) in enumerate(data_loader):
+                print("\r",str(i)+"/"+str(test_loader.__len__()),end="",flush=True)
+
+                inputs = inputs.cuda()
+
+                output = model(inputs)
+                output = output.data.cpu().numpy()
+
+                for i in range(output.shape[0]):
+
+                    output_one = output[i][np.newaxis, :]
+                    output_one = np.argmax(output_one)
+
+                    res_list.append(output_one)
+        return res_list
+
+
+    def cleanData(self, data_loader, target_label, move_dir):
+        """
+        input: data, move_path
+        output: None
+
+        """
+        self.model.eval()
+        
+        #predict
+        #res_list = []
+        count = 0
+        with torch.no_grad():
+            #end = time.time()
+            for i, (inputs, target, img_names) in enumerate(data_loader):
+                print("\r",str(i)+"/"+str(data_loader.__len__()),end="",flush=True)
+
+                inputs = inputs.cuda()
+
+                output = self.model(inputs)
+                output = output.data.cpu().numpy()
+
+                for i in range(output.shape[0]):
+
+                    output_one = output[i][np.newaxis, :]
+                    output_one = np.argmax(output_one)
+
+                    
+                    if output_one!=target_label:
+                        #print(output_one, target_label,img_names[i])
+                        img_name = os.path.basename(img_names[i])
+                        os.rename(img_names[i], os.path.join(move_dir,img_name))
+                        count += 1
+        print("[INFO] Total: ",count)
+
+
+
+
+    def modelLoad(self,model_path):
+        self.model.load_state_dict(torch.load(model_path))
+        
+        self.model = torch.nn.DataParallel(self.model)
+
+    def modelSave(self):
         pass
