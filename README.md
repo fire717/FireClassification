@@ -31,11 +31,15 @@ Read the documentation at source code.
 * 交叉验证
 * 梯度裁剪
 * earlystop
+* weightdecay
+* 按文件夹设置分类标签、读取csv标签
 
 ### 
 
 ## 三、To Do
 * 完善Readme
+* 增加使用文档
+* 彻底分离用户自定义部分的代码
 * tensorboard可视化
 * 特征图热力图可视化
 

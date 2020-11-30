@@ -27,10 +27,10 @@ def main(cfg):
 
     runner = FireRunner(cfg, model)
 
-    model_path = 'output/mobilenetv3_e5_0.99884.pth'
+    model_path = 'output/mobilenetv3_e13_0.99905.pth'
     runner.modelLoad(model_path)
 
-    move_dir = "../data/dataset/d_trainval/v8/tmp"
+    move_dir = "../data/dataset/tmp"
     target_label = 1
     runner.cleanData(train_loader, target_label, move_dir)
 
