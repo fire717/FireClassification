@@ -19,9 +19,9 @@ cfg = {
     'val_path':"",
     'pretrained':'', #path or ''
     #pretrained/se_resnext50_32x4d-a260b3a4.pth
-    'log_interval':10,
-    'try_to_train_items': 1000,   # 0   
-    'save_best_only': True,
+    'log_interval':10,  
+    'try_to_train_items': 0,   # 0   
+    'save_best_only': False,
     "save_dir": "output/",
     'pin_memory': True,
     'metrics': [''], # default is acc,  can add F1  ...
@@ -31,13 +31,13 @@ cfg = {
     "img_size": [300, 400], # [h, w]
     'learning_rate':0.001,
     'batch_size':8,
-    'epochs':15,
+    'epochs':10,
     'optimizer':'Ranger',  #Adam  SGD AdaBelief Ranger
-    'scheduler':'SGDR-5-2', #default  SGDR-5-2  CVPR   step-4-0.8
+    'scheduler':'SGDR-10-2', #default  SGDR-5-2  CVPR   step-4-0.8
 
     'warmup_epoch':0, # 
     'weight_decay' : 0.0001,
-    "k_flod":10,
+    "k_flod":5,
     'start_fold':0,
     'early_stop_patient':26,
 
@@ -46,7 +46,7 @@ cfg = {
     'checkpoint':None,
     'class_weight': None, # None
     'clip_gradient': 1,       # 0
-    'freeze_nonlinear_epoch':0,
+    'freeze_nonlinear_epoch':2,
 
 
     ### Test
