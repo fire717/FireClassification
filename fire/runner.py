@@ -95,9 +95,33 @@ class FireRunner():
 
 
 
-    def predict(self):
+    def predict(self, data_loader):
+        self.model.eval()
+        correct = 0
 
-        pass
+        res_dict = {}
+        with torch.no_grad():
+            pres = []
+            labels = []
+            for (data, img_names) in data_loader:
+                data = data.to(self.device)
+
+                output = self.model(data).double()
+
+
+                #print(output.shape)
+                pred_score = nn.Softmax(dim=1)(output)
+                #print(pred_score.shape)
+                pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+
+                batch_pred_score = pred_score.data.cpu().numpy().tolist()
+                for i in range(len(batch_pred_score)):
+                    res_dict[os.path.basename(img_names[i])] = pred[i].item()
+
+
+        pres = np.array(pres)
+
+        return res_dict
 
     def evaluate(self, data_loader):
         self.model.eval()

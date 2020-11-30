@@ -2,7 +2,7 @@
 
 cfg = {
     ### Global Set
-    "model_name": "adv-efficientnet-b0",  
+    "model_name": "se_resnext50_32x4d",  
     #mobilenetv3 adv-efficientnet-b2 se_resnext50_32x4d  xception resnext101_32x8d_wsl
     'GPU_ID': '0',
     "class_number": 5,
@@ -14,10 +14,11 @@ cfg = {
 
     ### Train Setting
     'train_path':"../data/train_images",
-    'label_type': 'CSV',# path or 'DIR' mean label by dir name
+    'label_type': 'CSV',# path or 'DIR' 
     'label_path': '../data/train.csv',# if 'DIR' quale  train_path
     'val_path':"",
-    'pretrained':'pretrained/adv-efficientnet-b0-b64d5a18.pth', #path or ''
+    'pretrained':'', #path or ''
+    #pretrained/se_resnext50_32x4d-a260b3a4.pth
     'log_interval':10,
     'try_to_train_items': 1000,   # 0   
     'save_best_only': True,
@@ -27,12 +28,12 @@ cfg = {
 
 
     ### Train Hyperparameters
-    "img_size": [224, 224], # [h, w]
+    "img_size": [300, 400], # [h, w]
     'learning_rate':0.001,
-    'batch_size':16,
-    'epochs':31,
+    'batch_size':8,
+    'epochs':15,
     'optimizer':'Ranger',  #Adam  SGD AdaBelief Ranger
-    'scheduler':'SGDR-5-2', #default  SGDR-5-2     step-4-0.8
+    'scheduler':'SGDR-5-2', #default  SGDR-5-2  CVPR   step-4-0.8
 
     'warmup_epoch':0, # 
     'weight_decay' : 0.0001,
@@ -45,11 +46,13 @@ cfg = {
     'checkpoint':None,
     'class_weight': None, # None
     'clip_gradient': 1,       # 0
+    'freeze_nonlinear_epoch':0,
 
 
     ### Test
-    'test_path':"../data/dataset/e_test",#_resize_rotate
+    'model_path':'output/se_resnext50_32x4d_e1_0.73000.pth',
+    'test_path':"../data/test_images",#_resize_rotate
     'use_TTA':0,
-    'test_batch_size': 4,
+    'test_batch_size': 1,
     
     }

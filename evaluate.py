@@ -27,8 +27,8 @@ def main(cfg):
 
     runner = FireRunner(cfg, model)
 
-    model_path = 'output/mobilenetv3_e13_0.99905.pth'
-    runner.modelLoad(model_path)
+
+    runner.modelLoad(cfg['model_path'])
 
 
     runner.evaluate(train_loader)

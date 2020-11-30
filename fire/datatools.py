@@ -170,7 +170,7 @@ def getDataLoader(mode, input_data, cfg):
                                 transforms.ToTensor(),
                                 my_normalize,
                                 ])),
-                        batch_size=batch_size, shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+                        batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
 
         val_loader = torch.utils.data.DataLoader(
                     my_dataloader(input_data[1],transforms.Compose([
@@ -188,11 +188,11 @@ def getDataLoader(mode, input_data, cfg):
         test_loader = torch.utils.data.DataLoader(
                 my_dataloader(input_data[0],
                         transforms.Compose([
-                                    TestDataAug(img_size, img_size),
+                                    TestDataAug(cfg['img_size']),
                                     transforms.ToTensor(),
                                     my_normalize
                                 ])
-                ), batch_size=batch_size, shuffle=False, 
+                ), batch_size=cfg['test_batch_size'], shuffle=False, 
                 num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory']
             )
 
