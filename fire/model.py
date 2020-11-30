@@ -41,6 +41,7 @@ class FireModel(nn.Module):
 
         elif 'resnext' in self.cfg['model_name'] or \
                 'xception' in self.cfg['model_name']:
+            out = self.pretrain_model(img)
             out = out.view(out.size(0), -1)
             out = self.last_linear(out)
 
@@ -104,11 +105,13 @@ class FireModel(nn.Module):
         elif 'resnext' in self.cfg['model_name'] or \
                 'xception' in self.cfg['model_name']:
             self.avgpool = nn.AdaptiveAvgPool2d(1)
-            self.pretrain_model = nn.Sequential(*list(model.children())[:-1])
+            #print(self.pretrain_model)
+            fc_features = self.pretrain_model.last_linear.in_features
+            self.pretrain_model = nn.Sequential(*list(self.pretrain_model.children())[:-1])
             
             # self.dp_linear = nn.Linear(fc_features, 8) 
             # self.dp = nn.Dropout(0.50)
-            self.last_linear = nn.Linear(fc_features, class_number) 
+            self.last_linear = nn.Linear(fc_features, self.cfg['class_number']) 
 
         else:
             raise Exception("[ERROR] Unknown model_name: ",self.cfg['model_name'])
@@ -140,29 +143,29 @@ class FireModel(nn.Module):
         elif 'resnext' in self.cfg['model_name'] or \
                 'xception' in self.cfg['model_name']:
             #model_name = 'resnext50' # se_resnext50_32x4d xception
-            self.pretrain_model = pretrainedmodels.__dict__[model_name](num_classes=1000, pretrained=None)
-            print(pretrainedmodels.pretrained_settings[model_name])
+            self.pretrain_model = pretrainedmodels.__dict__[self.cfg['model_name']](num_classes=1000, pretrained=None)
+            print(pretrainedmodels.pretrained_settings[self.cfg['model_name']])
 
             if self.cfg['model_name']=="resnet50":
                 #model.cpu()
-                self.pretrain_model.load_state_dict(torch.load("../pretrained/resnet50-19c8e357.pth"),strict=False)
+                self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                 fc_features = self.pretrain_model.last_linear.in_features 
             elif self.cfg['model_name']=="xception":
-                self.pretrain_model.load_state_dict(torch.load("../pretrained/xception-43020ad28.pth"),strict=False)
+                self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                 fc_features = self.pretrain_model.last_linear.in_features 
             elif self.cfg['model_name'] == "se_resnext50_32x4d":
-                self.pretrain_model.load_state_dict(torch.load("../pretrained/se_resnext50_32x4d-a260b3a4.pth"),strict=False)
+                self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                 self.pretrain_model.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
                 fc_features = self.pretrain_model.last_linear.in_features 
             elif self.cfg['model_name'] == "se_resnext101_32x4d":
-                self.pretrain_model.load_state_dict(torch.load("../pretrained/se_resnext101_32x4d-3b2fe3d8.pth"),strict=False)
+                self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                 self.pretrain_model.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
                 fc_features = self.pretrain_model.last_linear.in_features 
             elif self.cfg['model_name'] == "resnext101_32x8d_wsl":
-                self.pretrain_model.load_state_dict(torch.load("../pretrained/ig_resnext101_32x8-c38310e5.pth"),strict=False)
+                self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                 fc_features = self.pretrain_model.fc.in_features 
             elif self.cfg['model_name'] == "resnext101_32x16d_wsl":
-                self.pretrain_model.load_state_dict(torch.load("../pretrained/ig_resnext101_32x16-c6f796b0.pth"),strict=False)
+                self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                 fc_features = self.pretrain_model.fc.in_features 
             else:
                 raise Exception("[ERROR] Not load pretrained model!")
