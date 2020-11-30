@@ -104,11 +104,13 @@ class FireModel(nn.Module):
         
         elif 'resnext' in self.cfg['model_name'] or \
                 'xception' in self.cfg['model_name']:
-            self.avgpool = nn.AdaptiveAvgPool2d(1)
+            #self.avgpool = nn.AdaptiveAvgPool2d(1)
             #print(self.pretrain_model)
             fc_features = self.pretrain_model.last_linear.in_features
+
             self.pretrain_model = nn.Sequential(*list(self.pretrain_model.children())[:-1])
-            
+            # print(self.pretrain_model)
+            # b
             # self.dp_linear = nn.Linear(fc_features, 8) 
             # self.dp = nn.Dropout(0.50)
             self.last_linear = nn.Linear(fc_features, self.cfg['class_number']) 

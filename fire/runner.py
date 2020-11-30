@@ -58,6 +58,16 @@ class FireRunner():
 
 
 
+    def freezeBeforeLinear(self, epoch, freeze_epochs = 2):
+        if epoch<freeze_epochs:
+            for child in list(self.model.children())[:-1]:
+                for param in child.parameters():
+                    param.requires_grad = False
+        elif epoch==freeze_epochs:
+            for child in list(self.model.children())[:-1]:
+                for param in child.parameters():
+                    param.requires_grad = True
+        #b
 
 
     def train(self, train_loader, val_loader):
@@ -66,6 +76,8 @@ class FireRunner():
         self.onTrainStart()
 
         for epoch in range(self.cfg['epochs']):
+
+            self.freezeBeforeLinear(epoch, self.cfg['freeze_nonlinear_epoch'])
 
             self.onTrainStep(train_loader, epoch)
 

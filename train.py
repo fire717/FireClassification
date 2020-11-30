@@ -15,6 +15,10 @@ def main(cfg):
 
 
     model = FireModel(cfg)
+    #print(model)
+
+
+
     
 
     data = FireData(cfg)
