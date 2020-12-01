@@ -32,9 +32,6 @@ class FireModel(nn.Module):
             # b
             out = self.classifier(out)
 
-        elif self.cfg['model_name']=="xception":
-            out = self.model_feature(img)
-            out = self.avgpool(out)
 
         elif "efficientnet" in self.cfg['model_name']:
             out = self.pretrain_model(img)
