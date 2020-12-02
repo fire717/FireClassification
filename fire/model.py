@@ -5,7 +5,7 @@ import pretrainedmodels
 from efficientnet_pytorch import EfficientNet
 
 from fire.models.mobilenetv3 import MobileNetV3
-
+import torchvision
 
 class FireModel(nn.Module):
     def __init__(self, cfg):
@@ -22,7 +22,7 @@ class FireModel(nn.Module):
     
     def forward(self, img):        
 
-        if self.cfg['model_name']=="mobilenetv3":
+        if self.cfg['model_name'] in ['mobilenetv2','mobilenetv3']:
 
             out = self.features(img)
 
@@ -56,12 +56,12 @@ class FireModel(nn.Module):
 
     def changeModelStructure(self):
         ### Change model
-        if self.cfg['model_name'] == "mobilenetv3":
+        if self.cfg['model_name'] in ['mobilenetv2','mobilenetv3']:
             in_features = self.pretrain_model.classifier[1].in_features
             self.features = self.pretrain_model.features
             #self.avgpool = nn.AdaptiveAvgPool2d(1)
             self.classifier = nn.Sequential(
-                nn.Dropout(p=0.8),    # refer to paper section 6
+                nn.Dropout(p=self.cfg['dropout']),    # refer to paper section 6
                 nn.Linear(in_features, self.cfg['class_number']),
             )
 
@@ -120,7 +120,18 @@ class FireModel(nn.Module):
 
 
         ### Create model
-        if self.cfg['model_name']=="mobilenetv3":
+
+        if self.cfg['model_name']=="mobilenetv2":
+            #model.cpu()
+            self.pretrain_model = torchvision.models.mobilenet_v2(pretrained=False, progress=True, width_mult=1.0)
+            
+            if self.cfg['pretrained']:
+                state_dict = torch.load(self.cfg['pretrained'])
+                self.pretrain_model.load_state_dict(state_dict, strict=True)
+
+
+
+        elif self.cfg['model_name']=="mobilenetv3":
             #model.cpu()
             self.pretrain_model = MobileNetV3()
             if self.cfg['pretrained']:

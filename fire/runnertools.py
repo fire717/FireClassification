@@ -61,7 +61,8 @@ def writeLogs(cfg,
                         "start_fold",
                         'label_smooth',
                         'class_weight',
-                        'clip_gradient']):
+                        'clip_gradient',
+                        'dropout']):
     # 可以自定义要保存的字段
     log_path = os.path.join(cfg['save_dir'], 'log.csv')
     if not os.path.exists(log_path):
