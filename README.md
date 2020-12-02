@@ -10,9 +10,9 @@ Read the documentation at source code.
 ## 二、功能
 ### 1.已支持网络
 #### 分类
-* Resnet系列，Densenet系列，VGGnet系列等所有4.1支持的网络
-* mobilenetv3
-* efficientnet系列
+* Resnet系列，Densenet系列，VGGnet系列等所有[pretrained-models.pytorch](https://github.com/Cadene/pretrained-models.pytorch)支持的网络
+* [mobilenetv2](https://pytorch.org/docs/stable/torchvision/models.html?highlight=mobilenet#torchvision.models.mobilenet_v2)，[mobilenetv3](https://github.com/kuan-wang/pytorch-mobilenet-v3)
+* [EfficientNet](https://github.com/lukemelas/EfficientNet-PyTorch)
 
 ### 2.优化器
 * Adam  
@@ -45,7 +45,5 @@ Read the documentation at source code.
 * 特征图热力图可视化
 
 ## 四、参考资源
-1. [pretrained-models.pytorch](https://github.com/Cadene/pretrained-models.pytorch)
-2. [EfficientNet](https://github.com/lukemelas/EfficientNet-PyTorch)
-3. [warmup](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
-4. [Ranger](https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer)
+1. [warmup](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
+2. [Ranger](https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer)

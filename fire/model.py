@@ -22,7 +22,15 @@ class FireModel(nn.Module):
     
     def forward(self, img):        
 
-        if self.cfg['model_name'] in ['mobilenetv2','mobilenetv3']:
+        if self.cfg['model_name'] in ['mobilenetv2']:
+
+            out = self.features(img)
+
+            out = nn.functional.adaptive_avg_pool2d(out, 1).reshape(out.shape[0], -1)
+            #nn.AdaptiveAvgPool2d(1)
+            out = self.classifier(out)
+
+        if self.cfg['model_name'] in ['mobilenetv3']:
 
             out = self.features(img)
 
