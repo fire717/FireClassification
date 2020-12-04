@@ -1,7 +1,9 @@
-import torch.optim as optim
-from fire.ranger import Ranger 
 import os
 import time
+import torch
+import torch.optim as optim
+from fire.ranger import Ranger 
+from fire.loss import FocalLoss
 
 def getSchedu(schedu, optimizer):
     if schedu=='default':
@@ -30,7 +32,33 @@ def getOptimizer(optims, model, learning_rate, weight_decay):
     return optimizer
 
 
+def getLossFunc(device, cfg):
+    # loss
 
+    if cfg['class_weight']:
+        weight_loss = torch.DoubleTensor(cfg['class_weight']).to(device)
+    else:
+        weight_loss = torch.DoubleTensor([1]*cfg['class_number']).to(device)
+    
+
+
+    if 'Focalloss' in cfg['loss']:
+        gamma = float(cfg['loss'].strip().split('-')[1])
+        loss_func = FocalLoss(gamma,weight=weight_loss).to(device)
+
+
+    else:
+        loss_func = torch.nn.CrossEntropyLoss(weight=weight_loss).to(device)
+            #self.loss_func = CrossEntropyLossOneHot().to(self.device)
+
+
+
+    return loss_func
+
+
+
+
+############### Tools
 
 def clipGradient(optimizer, grad_clip=1):
     """
@@ -47,23 +75,9 @@ def clipGradient(optimizer, grad_clip=1):
 
 def writeLogs(cfg, 
             best_epoch, 
-            early_stop_value, 
-            line_list=["model_name",
-                        "img_size",
-                        "learning_rate",
-                        "batch_size",
-                        "epochs",
-                        "optimizer",
-                        "scheduler",
-                        "warmup_epoch",
-                        "weight_decay",
-                        "k_flod",
-                        "start_fold",
-                        'label_smooth',
-                        'class_weight',
-                        'clip_gradient',
-                        'dropout']):
+            early_stop_value):
     # 可以自定义要保存的字段
+    line_list= cfg['log_item']
     log_path = os.path.join(cfg['save_dir'], 'log.csv')
     if not os.path.exists(log_path):
         with open(log_path, 'w', encoding='utf-8') as f:

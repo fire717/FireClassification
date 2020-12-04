@@ -25,7 +25,11 @@ Read the documentation at source code.
 * StepLR
 * SGDR
 
-### 4.其他
+### 4.损失函数
+* 交叉熵
+* Focalloss
+
+### 5.其他
 * Metric(acc, F1)
 * 训练日志保存
 * 交叉验证

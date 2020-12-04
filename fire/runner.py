@@ -5,8 +5,10 @@ import datetime
 import torch
 import torch.nn as nn
 import numpy as np
+import cv2
 
-from fire.runnertools import getSchedu, getOptimizer, clipGradient, writeLogs
+from fire.runnertools import getSchedu, getOptimizer, getLossFunc
+from fire.runnertools import clipGradient, writeLogs
 from fire.metrics import getF1
 from fire.scheduler import GradualWarmupScheduler
 from fire.utils import printDash
@@ -31,14 +33,10 @@ class FireRunner():
         ############################################################
         
 
-    
         # loss
-        if self.cfg['class_weight']:
-            weight_loss = torch.DoubleTensor(self.cfg['class_weight']).to(self.device)
-        else:
-            weight_loss = torch.DoubleTensor([1]*self.cfg['class_number']).to(self.device)
-        self.loss_func = torch.nn.CrossEntropyLoss(weight=weight_loss).to(self.device)
-        #self.loss_func = CrossEntropyLossOneHot().to(self.device)
+        self.loss_func = getLossFunc(self.device, cfg)
+        
+
         
         # optimizer
         self.optimizer = getOptimizer(self.cfg['optimizer'], 
@@ -122,6 +120,73 @@ class FireRunner():
         pres = np.array(pres)
 
         return res_dict
+
+    def heatmap(self, data_loader, save_dir, count):
+        self.model.eval()
+        c = 0
+
+        res_dict = {}
+        with torch.no_grad():
+            pres = []
+            labels = []
+            for (data, img_names) in data_loader:
+                data = data.to(self.device)
+
+
+                print(self.model.features[:13])
+                #b
+                # res
+                output = self.model(data).double()
+                pred = nn.Softmax(dim=1)(output)
+                print("pre: ", pred.cpu())
+
+
+                features = self.model.features[:13](data)
+                weights = nn.functional.adaptive_avg_pool2d(features,(1,1))
+
+                weights_value = weights.cpu().numpy()
+                # weights_value = np.reshape(weights_value, (weights_value.shape[1],))
+                # print(weights_value.shape)
+                # print(weights_value[:10])
+
+                features_value = features.cpu().numpy()
+                print(weights_value.shape, features_value.shape)
+
+                heatmap = weights_value*features_value
+                print(heatmap.shape )
+
+                heatmap = np.mean(heatmap, axis = 1)
+                print(heatmap.shape )
+                heatmap = np.maximum(heatmap, 0)
+                heatmap = heatmap[0]
+                #heatmap = np.reshape(heatmap, (heatmap.shape[1], heatmap.shape[2]))
+                print(heatmap.shape )
+
+                origin_img = cv2.imread(img_names[0])
+                print(origin_img.shape)
+
+                # We resize the heatmap to have the same size as the original image
+                heatmap = cv2.resize(heatmap, (origin_img.shape[1], origin_img.shape[0]))
+                # We convert the heatmap to RGB
+                heatmap = np.uint8(255 * heatmap)
+
+                # We apply the heatmap to the original image
+                heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+                cv2.imwrite(os.path.join(save_dir, "mask_"+os.path.basename(img_names[0])), 
+                                heatmap)
+
+                # 0.4 here is a heatmap intensity factor
+                superimposed_img = heatmap * 0.4 + origin_img
+
+                # Save the image to disk
+                cv2.imwrite(os.path.join(save_dir, os.path.basename(img_names[0])), 
+                                superimposed_img)
+
+                c+=1
+                if c==count:
+                    return
+
+
 
     def evaluate(self, data_loader):
         self.model.eval()
@@ -406,10 +471,11 @@ class FireRunner():
 
 
 
-    def modelLoad(self,model_path):
+    def modelLoad(self,model_path, data_parallel = True):
         self.model.load_state_dict(torch.load(model_path))
         
-        self.model = torch.nn.DataParallel(self.model)
+        if data_parallel:
+            self.model = torch.nn.DataParallel(self.model)
 
     def modelSave(self):
         pass

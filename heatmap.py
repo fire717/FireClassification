@@ -4,13 +4,13 @@ import random
 from fire import initFire, FireModel, FireRunner, FireData
 
 from config import cfg
-
+import pandas as pd
 
 
 
 def main(cfg):
 
-
+    cfg['test_batch_size'] = 1
     initFire(cfg)
 
 
@@ -22,16 +22,20 @@ def main(cfg):
     # data.showTrainData()
     # b
     
-    train_loader = data.getTrainDataloader()
+    test_loader = data.getTestDataloader()
 
 
     runner = FireRunner(cfg, model)
 
-    runner.modelLoad(cfg['model_path'])
+    #print(model)
+    runner.modelLoad(cfg['model_path'], data_parallel = False)
 
-    move_dir = "../data/dataset/d_trainval/v8/tmp"
-    target_label = 1
-    runner.cleanData(train_loader, target_label, move_dir)
+    show_count = 3
+    runner.heatmap(test_loader, cfg["save_dir"], show_count)
+
+
+
+    
 
 
 

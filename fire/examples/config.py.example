@@ -2,7 +2,7 @@
 
 cfg = {
     ### Global Set
-    "model_name": "mobilenetv2",  
+    "model_name": "mobilenetv3",  
     #mobilenetv3 adv-efficientnet-b2 se_resnext50_32x4d  xception resnext101_32x8d_wsl
     'GPU_ID': '0',
     "class_number": 2,
@@ -19,14 +19,17 @@ cfg = {
     'label_type': 'DIR',# path or 'DIR' 
     'label_path': '',# if 'DIR' quale  train_path
     'val_path':"",
-    'pretrained':'pretrained/mobilenet_v2-b0353104.pth', #path or ''
+    'pretrained':'pretrained/mobilenetv3_small_67.4.pth.tar', #path or ''
+    #pretrained/mobilenetv3_small_67.4.pth.tar
+    #pretrained/mobilenet_v2-b0353104.pth
     #pretrained/se_resnext50_32x4d-a260b3a4.pth
     'log_interval':10,  
-    'try_to_train_items': 0,   # 0   
+    'try_to_train_items': 0,   # 0 means all
     'save_best_only': True,
     "save_dir": "output/",
     'pin_memory': True,
     'metrics': ['F1'], # default is acc,  can add F1  ...
+    "loss": 'Focalloss-0.2', # default or '' means CE, can other be Focalloss-0, BCE...
 
 
     ### Train Hyperparameters
@@ -34,7 +37,7 @@ cfg = {
     'learning_rate':0.001,
     'batch_size':64,
     'epochs':10,
-    'optimizer':'Adam',  #Adam  SGD AdaBelief Ranger
+    'optimizer':'Ranger',  #Adam  SGD AdaBelief Ranger
     'scheduler':'SGDR-10-2', #default  SGDR-5-2  CVPR   step-4-0.8
 
     'warmup_epoch':0, # 
@@ -46,17 +49,35 @@ cfg = {
     'use_distill':0,
     'label_smooth':0,
     'checkpoint':None,
-    'class_weight': None,#[1.8, 1], # None
+    'class_weight': None, # None [1, 1]
     'clip_gradient': 0,#1,       # 0
     'freeze_nonlinear_epoch':0,
 
-    'dropout':0.2,
+    'dropout':0.5, #before last_linear
 
 
     ### Test
-    'model_path':'output/mobilenetv3_e10_0.99928.pth',
-    'test_path':"../data/dataset/e_test",#_resize_rotate
+    'model_path':'output/mobilenetv3_e9_0.99913.pth',
+    'test_path':"../data/dataset/e_test/fake",#_resize_rotate
     'use_TTA':0,
     'test_batch_size': 1,
     
+
+    ### log
+    'log_item':["model_name",
+                "img_size",
+                "learning_rate",
+                "batch_size",
+                "epochs",
+                "optimizer",
+                "scheduler",
+                "warmup_epoch",
+                "weight_decay",
+                "k_flod",
+                "start_fold",
+                'label_smooth',
+                'class_weight',
+                'clip_gradient',
+                'dropout',
+                'loss'],
     }
