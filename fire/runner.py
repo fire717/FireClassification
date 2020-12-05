@@ -7,6 +7,8 @@ import torch.nn as nn
 import numpy as np
 import cv2
 
+from torch.utils.tensorboard import SummaryWriter
+
 from fire.runnertools import getSchedu, getOptimizer, getLossFunc
 from fire.runnertools import clipGradient, writeLogs
 from fire.metrics import getF1
@@ -55,6 +57,11 @@ class FireRunner():
                                                 after_scheduler=self.scheduler)
 
 
+        # log
+        self.log_time = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime(time.time()))
+        self.writer_train = SummaryWriter(os.path.join(cfg['save_dir'],'logs',self.log_time,'train'))
+        self.writer_val = SummaryWriter(os.path.join(cfg['save_dir'],'logs',self.log_time,'val'))
+
 
     def freezeBeforeLinear(self, epoch, freeze_epochs = 2):
         if epoch<freeze_epochs:
@@ -79,7 +86,7 @@ class FireRunner():
 
             self.onTrainStep(train_loader, epoch)
 
-            self.onTrainEpochEnd()
+            #self.onTrainEpochEnd()
 
             self.onValidation(val_loader, epoch)
 
@@ -290,23 +297,25 @@ class FireRunner():
             print_epoch_total = str(self.cfg['epochs'])+''.join([' ']*(4-len(str(self.cfg['epochs']))))
             if batch_idx % self.cfg['log_interval'] == 0:
                 print('\r',
-                    '{}/{} [{}/{} ({:.0f}%)] - ETA: {}, loss: {:.4f}, acc: {:.4f} '.format(
+                    '{}/{} [{}/{} ({:.0f}%)] - ETA: {}, loss: {:.4f}, acc: {:.4f}  LR: {:.6f}'.format(
                     print_epoch, print_epoch_total, batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), 
                     datetime.timedelta(seconds=eta),
-                    loss.item(),train_acc), 
+                    loss.item(),train_acc,
+                    self.optimizer.param_groups[0]["lr"]), 
                     end="",flush=True)
 
-
-        
-
-    def onTrainEpochEnd(self):
-        print(" LR:", '{:.6f}'.format(self.optimizer.param_groups[0]["lr"]), end="")
+            self.writer_train.add_scalar('acc', train_acc, global_step=epoch)
+            self.writer_train.add_scalar('loss', loss.item(), global_step=epoch)
+            self.writer_train.add_scalar('LR', self.optimizer.param_groups[0]["lr"], global_step=epoch)
 
 
     def onTrainEnd(self):
 
-        writeLogs(self.cfg,self.best_epoch,self.early_stop_value)
+        writeLogs(self.cfg,self.best_epoch,self.early_stop_value,self.log_time)
+
+        self.writer_train.close()
+        self.writer_val.close()
 
         del self.model
         gc.collect()
@@ -361,12 +370,16 @@ class FireRunner():
             precision, recall, f1_score = getF1(pres, labels)
             print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}%, precision: {:.5f}, recall: {:.5f}, f1_score: {:.5f}\n'.format(
                 self.val_loss, 100. * self.val_acc, precision, recall, f1_score))
+            self.writer_val.add_scalar('precision', precision, global_step=epoch)
+            self.writer_val.add_scalar('recall', recall, global_step=epoch)
+            self.writer_val.add_scalar('f1_score', f1_score, global_step=epoch)
 
         else:
             print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}% \n'.format(
                 self.val_loss, 100. * self.val_acc))
 
-
+        self.writer_val.add_scalar('acc', self.val_acc, global_step=epoch)
+        self.writer_val.add_scalar('loss', self.val_loss, global_step=epoch)
 
 
         

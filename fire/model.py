@@ -68,6 +68,8 @@ class FireModel(nn.Module):
             in_features = self.pretrain_model.classifier[1].in_features
             self.features = self.pretrain_model.features
             #self.avgpool = nn.AdaptiveAvgPool2d(1)
+            # print(self.features)
+            # b
             self.classifier = nn.Sequential(
                 nn.Dropout(p=self.cfg['dropout']),    # refer to paper section 6
                 nn.Linear(in_features, self.cfg['class_number']),

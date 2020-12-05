@@ -75,10 +75,11 @@ def clipGradient(optimizer, grad_clip=1):
 
 def writeLogs(cfg, 
             best_epoch, 
-            early_stop_value):
+            early_stop_value,
+            log_time):
     # 可以自定义要保存的字段
     line_list= cfg['log_item']
-    log_path = os.path.join(cfg['save_dir'], 'log.csv')
+    log_path = os.path.join(cfg['save_dir'], 'history.csv')
     if not os.path.exists(log_path):
         with open(log_path, 'w', encoding='utf-8') as f:
             line = ','.join(['timestamps']+line_list+['best_epoch','best_value'])+"\n"
@@ -86,7 +87,7 @@ def writeLogs(cfg,
 
     with open(log_path, 'a', encoding='utf-8') as f:
 
-        line_tmp = [int(time.time())] + \
+        line_tmp = [log_time] + \
                     ['-'.join([str(v) for v in cfg[x]]) if isinstance(cfg[x],list) else cfg[x] for x in line_list] + \
                     [best_epoch, early_stop_value]
         line = ','.join([str(x) for x in line_tmp])+"\n"

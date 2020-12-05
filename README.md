@@ -38,6 +38,7 @@ Read the documentation at source code.
 * weightdecay
 * 按文件夹设置分类标签、读取csv标签
 * 冻结/解冻 除最后的全连接层的特征层
+* tensorboard可视化
 
 ### 
 
