@@ -4,7 +4,7 @@ cfg = {
     ### Global Set
     "model_name": "mobilenetv3",  
     #mobilenetv3 adv-efficientnet-b2 se_resnext50_32x4d  xception resnext101_32x8d_wsl
-    'GPU_ID': '0',
+    'GPU_ID': '1',
     "class_number": 2,
 
     "random_seed":42,
@@ -24,12 +24,12 @@ cfg = {
     #pretrained/mobilenet_v2-b0353104.pth
     #pretrained/se_resnext50_32x4d-a260b3a4.pth
     'log_interval':10,  
-    'try_to_train_items': 0,   # 0 means all
+    'try_to_train_items': 1000,   # 0 means all
     'save_best_only': True,
     "save_dir": "output/",
     'pin_memory': True,
     'metrics': ['F1'], # default is acc,  can add F1  ...
-    "loss": 'Focalloss-1', # default or '' means CE, can other be Focalloss-0, BCE...
+    "loss": 'CE', # default or '' means CE, can other be Focalloss-1, BCE...
 
 
     ### Train Hyperparameters
@@ -64,7 +64,7 @@ cfg = {
     
 
     ### log
-    'comment':"GMP",
+    'comment':"",
     'log_item':["model_name",
                 "img_size",
                 "learning_rate",

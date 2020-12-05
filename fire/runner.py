@@ -212,7 +212,7 @@ class FireRunner():
                 pred_score = nn.Softmax(dim=1)(output)
                 #print(pred_score.shape)
                 pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
-                if self.cfg['use_distill'] or self.cfg['label_smooth']>0:
+                if self.cfg['use_distill']:
                     target = target.max(1, keepdim=True)[1] 
                 correct += pred.eq(target.view_as(pred)).sum().item()
 
@@ -279,7 +279,7 @@ class FireRunner():
             ### train acc
             pred_score = nn.Softmax(dim=1)(output)
             pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
-            if self.cfg['use_distill'] or self.cfg['label_smooth']>0:
+            if self.cfg['use_distill']:
                 target = target.max(1, keepdim=True)[1] 
             correct += pred.eq(target.view_as(pred)).sum().item()
             count += len(data)
@@ -349,7 +349,7 @@ class FireRunner():
                 pred_score = nn.Softmax(dim=1)(output)
                 #print(pred_score.shape)
                 pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
-                if self.cfg['use_distill'] or self.cfg['label_smooth']>0:
+                if self.cfg['use_distill']:
                     target = target.max(1, keepdim=True)[1] 
                 self.correct += pred.eq(target.view_as(pred)).sum().item()
 

@@ -3,7 +3,7 @@ import time
 import torch
 import torch.optim as optim
 from fire.ranger import Ranger 
-from fire.loss import FocalLoss
+from fire.loss import FocalLoss, CrossEntropyLoss
 
 def getSchedu(schedu, optimizer):
     if schedu=='default':
@@ -36,19 +36,23 @@ def getLossFunc(device, cfg):
     # loss
 
     if cfg['class_weight']:
-        weight_loss = torch.DoubleTensor(cfg['class_weight']).to(device)
+        loss_weight = torch.DoubleTensor(cfg['class_weight']).to(device)
     else:
-        weight_loss = torch.DoubleTensor([1]*cfg['class_number']).to(device)
+        loss_weight = torch.DoubleTensor([1]*cfg['class_number']).to(device)
     
 
 
     if 'Focalloss' in cfg['loss']:
         gamma = float(cfg['loss'].strip().split('-')[1])
-        loss_func = FocalLoss(gamma,weight=weight_loss).to(device)
+        loss_func = FocalLoss(label_smooth=cfg['label_smooth'],
+                            gamma=gamma,
+                            weight=loss_weight).to(device)
 
 
     else:
-        loss_func = torch.nn.CrossEntropyLoss(weight=weight_loss).to(device)
+        # loss_func = torch.nn.CrossEntropyLoss(weight=loss_weight).to(device)
+        loss_func = CrossEntropyLoss(label_smooth=cfg['label_smooth'],
+                            weight=loss_weight).to(device)
             #self.loss_func = CrossEntropyLossOneHot().to(self.device)
 
 

@@ -5,6 +5,10 @@ import torch.nn.functional as F
 
 ###########################  loss
 
+def labelSmooth(one_hot, label_smooth):
+    return one_hot*(1-label_smooth)+label_smooth/one_hot.shape[1]
+
+
 class CrossEntropyLossOneHot(nn.Module):
     def __init__(self):
         super(CrossEntropyLossOneHot, self).__init__()
@@ -14,17 +18,49 @@ class CrossEntropyLossOneHot(nn.Module):
         return torch.mean(torch.sum(-labels * self.log_softmax(preds), -1))
 
 
-
-class FocalLoss(nn.Module):
-    def __init__(self, gamma = 0., weight=None):
+class CrossEntropyLoss(nn.Module):
+    def __init__(self, label_smooth=0, weight=None):
         super().__init__()
-        self.gamma = gamma
-        self.weight = weight # means alpha
+        self.weight = weight 
+        self.label_smooth = label_smooth
         self.epsilon = 1e-7
         
     def forward(self, x, y):
 
         one_hot_label = F.one_hot(y, x.shape[1])
+
+        if self.label_smooth:
+            one_hot_label = labelSmooth(one_hot_label, self.label_smooth)
+
+        #y_pred = F.log_softmax(x, dim=1)
+        # equal below two lines
+        y_softmax = F.softmax(x, 1)
+        #print(y_softmax)
+        y_softmax = torch.clamp(y_softmax, self.epsilon, 1.0-self.epsilon)# avoid nan
+        y_softmaxlog = torch.log(y_softmax)
+
+        # original CE loss
+        loss = -one_hot_label * y_softmaxlog
+
+        loss = torch.mean(torch.sum(loss, -1))
+        return loss
+
+
+class FocalLoss(nn.Module):
+    def __init__(self, label_smooth=0, gamma = 0., weight=None):
+        super().__init__()
+        self.gamma = gamma
+        self.weight = weight # means alpha
+        self.epsilon = 1e-7
+        self.label_smooth = label_smooth
+        
+    def forward(self, x, y):
+
+        one_hot_label = F.one_hot(y, x.shape[1])
+
+        if self.label_smooth:
+            one_hot_label = labelSmooth(one_hot_label, self.label_smooth)
+
 
         #y_pred = F.log_softmax(x, dim=1)
         # equal below two lines
