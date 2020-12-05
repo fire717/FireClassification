@@ -29,7 +29,7 @@ cfg = {
     "save_dir": "output/",
     'pin_memory': True,
     'metrics': ['F1'], # default is acc,  can add F1  ...
-    "loss": 'Focalloss-0.2', # default or '' means CE, can other be Focalloss-0, BCE...
+    "loss": 'Focalloss-1', # default or '' means CE, can other be Focalloss-0, BCE...
 
 
     ### Train Hyperparameters
@@ -49,7 +49,7 @@ cfg = {
     'use_distill':0,
     'label_smooth':0,
     'checkpoint':None,
-    'class_weight': None, # None [1, 1]
+    'class_weight': None,#s[1.4, 0.78], # None [1, 1]
     'clip_gradient': 0,#1,       # 0
     'freeze_nonlinear_epoch':0,
 
@@ -64,6 +64,7 @@ cfg = {
     
 
     ### log
+    'comment':"GMP",
     'log_item':["model_name",
                 "img_size",
                 "learning_rate",
@@ -79,5 +80,6 @@ cfg = {
                 'class_weight',
                 'clip_gradient',
                 'dropout',
-                'loss'],
+                'loss',
+                'comment'],
     }

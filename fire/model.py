@@ -68,6 +68,8 @@ class FireModel(nn.Module):
             in_features = self.pretrain_model.classifier[1].in_features
             self.features = self.pretrain_model.features
             #self.avgpool = nn.AdaptiveAvgPool2d(1)
+            self.features[13] = nn.AdaptiveMaxPool2d(1)
+            #print(self.features[13])
             # print(self.features)
             # b
             self.classifier = nn.Sequential(
