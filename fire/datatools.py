@@ -71,7 +71,9 @@ class TensorDatasetTrainClassify(Dataset):
             for index, row in df.iterrows():
                 #print(row["image_id"], type(row["label"]))
                 img_path = os.path.join(dir_path, row["image_id"])
-                #print(dir_path,img_path)
+                img_path = img_path.replace("\\","/")
+                # print(img_path)
+                # b
                 self.label_dict[img_path] = row["label"]
                 #b
             if TensorDatasetTrainClassify._print_times==0:
