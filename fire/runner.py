@@ -255,6 +255,7 @@ class FireRunner():
         correct = 0
         count = 0
         batch_time = 0
+        total_loss = 0
         for batch_idx, (data, target, img_names) in enumerate(train_loader):
             one_batch_time_start = time.time()
             data, target = data.to(self.device), target.to(self.device)
@@ -268,6 +269,7 @@ class FireRunner():
             loss = self.loss_func(output, target)# + l2_regularization.item()
             loss.backward() #计算梯度
 
+            total_loss += loss.item()
 
             if self.cfg['clip_gradient']:
                 clipGradient(self.optimizer, self.cfg['clip_gradient'])
@@ -285,6 +287,7 @@ class FireRunner():
             count += len(data)
 
             train_acc =  correct / count
+            train_loss = total_loss/count
             #print(train_acc)
             one_batch_time = time.time() - one_batch_time_start
             batch_time+=one_batch_time
@@ -301,13 +304,13 @@ class FireRunner():
                     print_epoch, print_epoch_total, batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), 
                     datetime.timedelta(seconds=eta),
-                    loss.item(),train_acc,
+                    train_loss,train_acc,
                     self.optimizer.param_groups[0]["lr"]), 
                     end="",flush=True)
 
-            self.writer_train.add_scalar('acc', train_acc, global_step=epoch)
-            self.writer_train.add_scalar('loss', loss.item(), global_step=epoch)
-            self.writer_train.add_scalar('LR', self.optimizer.param_groups[0]["lr"], global_step=epoch)
+        self.writer_train.add_scalar('acc', train_acc, global_step=epoch)
+        self.writer_train.add_scalar('loss', train_loss, global_step=epoch)
+        self.writer_train.add_scalar('LR', self.optimizer.param_groups[0]["lr"], global_step=epoch)
 
 
     def onTrainEnd(self):
