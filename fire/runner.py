@@ -57,11 +57,7 @@ class FireRunner():
                                                 after_scheduler=self.scheduler)
 
 
-        # log
-        self.log_time = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime(time.time()))
-        self.writer_train = SummaryWriter(os.path.join(cfg['save_dir'],'logs',self.log_time,'train'))
-        self.writer_val = SummaryWriter(os.path.join(cfg['save_dir'],'logs',self.log_time,'val'))
-
+        
 
     def freezeBeforeLinear(self, epoch, freeze_epochs = 2):
         if epoch<freeze_epochs:
@@ -252,6 +248,12 @@ class FireRunner():
 
         self.earlystop = False
         self.best_epoch = 0
+
+        # log
+        self.log_time = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime(time.time()))
+        self.writer_train = SummaryWriter(os.path.join(self.cfg['save_dir'],'logs',self.log_time,'train'))
+        self.writer_val = SummaryWriter(os.path.join(self.cfg['save_dir'],'logs',self.log_time,'val'))
+
 
 
     def onTrainStep(self,train_loader, epoch):
