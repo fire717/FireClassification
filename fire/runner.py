@@ -207,9 +207,11 @@ class FireRunner():
                 #print(target.shape)
                 output = self.model(data).double()
 
-
-                #print(output.shape)
+                # print(img_names)
+                # print(output)
                 pred_score = nn.Softmax(dim=1)(output)
+                # print(pred_score)
+                # b
                 #print(pred_score.shape)
                 pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
                 if self.cfg['use_distill']:
@@ -219,6 +221,9 @@ class FireRunner():
 
                 batch_pred_score = pred_score.data.cpu().numpy().tolist()
                 batch_label_score = target.data.cpu().numpy().tolist()
+                # print(batch_pred_score)
+                # print(batch_label_score)
+                # b
                 pres.extend(batch_pred_score)
                 labels.extend(batch_label_score)
 
@@ -259,7 +264,6 @@ class FireRunner():
         for batch_idx, (data, target, img_names) in enumerate(train_loader):
             one_batch_time_start = time.time()
             data, target = data.to(self.device), target.to(self.device)
-
 
             output = self.model(data).double()
 
@@ -342,7 +346,7 @@ class FireRunner():
             labels = []
             for (data, target, img_names) in val_loader:
                 data, target = data.to(self.device), target.to(self.device)
-                #print(target.shape)
+
                 output = self.model(data).double()
 
 
@@ -488,7 +492,7 @@ class FireRunner():
 
 
     def modelLoad(self,model_path, data_parallel = True):
-        self.model.load_state_dict(torch.load(model_path))
+        self.model.load_state_dict(torch.load(model_path), strict=True)
         
         if data_parallel:
             self.model = torch.nn.DataParallel(self.model)

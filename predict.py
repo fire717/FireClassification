@@ -37,7 +37,7 @@ def main(cfg):
     # to csv
     res_df = pd.DataFrame.from_dict(res_dict, orient='index', columns=['label'])
     res_df = res_df.reset_index().rename(columns={'index':'image_id'})
-    res_df.to_csv(os.path.join(cfg['save_dir'], 'submission.csv'), 
+    res_df.to_csv(os.path.join(cfg['save_dir'], 'pre.csv'), 
                                 index=False,header=True)
 
 
