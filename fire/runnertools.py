@@ -7,7 +7,10 @@ from fire.loss import FocalLoss, CrossEntropyLoss
 
 def getSchedu(schedu, optimizer):
     if schedu=='default':
-            scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=1)
+        factor = float(schedu.strip().split('-')[1])
+        patience = int(schedu.strip().split('-')[2])
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
+                    mode='max', factor=0.2, patience=2,min_lr=0.000001)
     elif 'step' in schedu:
         step_size = int(schedu.strip().split('-')[1])
         gamma = int(schedu.strip().split('-')[2])
