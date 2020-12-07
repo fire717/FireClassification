@@ -51,5 +51,6 @@ Read the documentation at source code.
 * 特征图热力图可视化
 
 ## 四、参考资源
-1. [warmup](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
-2. [Ranger](https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer)
+1. [albumentations](https://github.com/albumentations-team/albumentations)
+2. [warmup](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
+3. [Ranger](https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer)

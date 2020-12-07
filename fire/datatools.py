@@ -56,11 +56,10 @@ class TensorDatasetTrainClassify(Dataset):
                     TensorDatasetTrainClassify._print_times=1
             
             for i, img_path in enumerate(self.train_jpg):
-                #print(self.label_path)
                 img_dirs = img_path.replace(self.label_path,'')
                 img_dirs = img_dirs.split('/')[:2]
                 img_dir = img_dirs[0] if img_dirs[0] else img_dirs[1]
-                
+
                 y = self.cate_dirs.index(img_dir)
                 self.label_dict[img_path] = y
 
@@ -226,6 +225,9 @@ def getDataLoader(mode, input_data, cfg):
                                                 ])),
                                 batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
 
+        if cfg['val_path']:
+            cfg['label_path'] = cfg['val_path']
+
         val_loader = torch.utils.data.DataLoader(
                                 my_dataloader(input_data[1],
                                             cfg['label_type'],
@@ -267,5 +269,30 @@ def getDataLoader(mode, input_data, cfg):
 
         return train_loader
 
+    elif mode=="val":
+        my_dataloader = TensorDatasetTrainClassify
+        
+        #auto aug
 
+        #from .autoaugment import ImageNetPolicy
+        # from libs.FastAutoAugment.data import  Augmentation
+        # from libs.FastAutoAugment.archive import fa_resnet50_rimagenet
+        if cfg['label_type'] == 'DIR':
+            cfg['label_path'] = cfg['val_path']
+
+        train_loader = torch.utils.data.DataLoader(
+                                my_dataloader(input_data[0],
+                                            cfg['label_type'],
+                                            cfg['label_path'],
+                                            False,
+                                            transforms.Compose([
+                                                TestDataAug(cfg['img_size']),
+                                                #ImageNetPolicy(),  #autoaug
+                                                #Augmentation(fa_resnet50_rimagenet()), #fastaa
+                                                transforms.ToTensor(),
+                                                my_normalize,
+                                                ])),
+                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+
+        return train_loader
 

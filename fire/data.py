@@ -21,7 +21,17 @@ class FireData():
     def getTrainValDataloader(self):
 
         if self.cfg['val_path'] != '':
-            print("[INFO] val_path is not none, use kflod to split train-val data ...")
+            print("[INFO] val_path is not none, not use kflod to split train-val data ...")
+            train_data = getFileNames(self.cfg['train_path'])
+            train_data.sort(key = lambda x:os.path.basename(x))
+            train_data = np.array(train_data)
+            random.shuffle(train_data)
+
+            val_data = getFileNames(self.cfg['val_path'])
+            if self.cfg['try_to_train_items'] > 0:
+                train_data = train_data[:self.cfg['try_to_train_items']]
+                val_data = val_data[:self.cfg['try_to_train_items']]
+
 
         else:
             print("[INFO] val_path is none, use kflod to split data: k=%d start_fold=%d" % (self.cfg['k_flod'],self.cfg['start_fold']))
@@ -62,6 +72,15 @@ class FireData():
                                         self.cfg)
         return train_loader
 
+    def getValDataloader(self):
+        data_names = getFileNames(self.cfg['val_path'])
+        print("[INFO] Total images: ", len(data_names))
+
+        input_data = [data_names]
+        train_loader = getDataLoader("val", 
+                                        input_data,
+                                        self.cfg)
+        return train_loader
 
     def getTestDataloader(self):
         data_names = getFileNames(self.cfg['test_path'])

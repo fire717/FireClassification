@@ -237,7 +237,7 @@ class FireRunner():
             print('      precision: {:.5f}, recall: {:.5f}, f1_score: {:.5f}\n'.format(
                   precision, recall, f1_score))
 
-
+################
 
     def onTrainStart(self):
         
@@ -475,16 +475,15 @@ class FireRunner():
                 inputs = inputs.cuda()
 
                 output = self.model(inputs)
+                output = nn.Softmax(dim=1)(output)
                 output = output.data.cpu().numpy()
 
                 for i in range(output.shape[0]):
 
                     output_one = output[i][np.newaxis, :]
-                    output_one = np.argmax(output_one)
 
-                    
-                    if output_one!=target_label:
-                        #print(output_one, target_label,img_names[i])
+                    if np.argmax(output_one)!=target_label:
+                        print(output_one, target_label,img_names[i])
                         img_name = os.path.basename(img_names[i])
                         os.rename(img_names[i], os.path.join(move_dir,img_name))
                         count += 1
