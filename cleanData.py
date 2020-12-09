@@ -30,7 +30,7 @@ def main(cfg):
     runner.modelLoad(cfg['model_path'])
 
     move_dir = "../data/dataset/d_trainval/v8/tmp"
-    target_label = 1
+    target_label = 0
     runner.cleanData(train_loader, target_label, move_dir)
 
 

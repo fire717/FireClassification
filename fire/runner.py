@@ -125,6 +125,7 @@ class FireRunner():
         return res_dict
 
     def heatmap(self, data_loader, save_dir, count):
+        print("[DEBUG] Not finish")
         self.model.eval()
         c = 0
 
@@ -136,46 +137,68 @@ class FireRunner():
                 data = data.to(self.device)
 
 
-                print(self.model.features[:13])
-                #b
+                # print(self.model.features[:])
+                # b
                 # res
                 output = self.model(data).double()
+                print('output', output)
                 pred = nn.Softmax(dim=1)(output)
                 print("pre: ", pred.cpu())
 
 
                 features = self.model.features[:13](data)
-                weights = nn.functional.adaptive_avg_pool2d(features,(1,1))
+                # out = self.model.features[13:](features)
+                # out = out.mean(3).mean(2)        #best 99919
+                # # print(out.shape)
+                # # b
+                # out = self.model.classifier(out)
+                
+                # print('output2', out)
 
+
+
+
+
+                weights = nn.functional.adaptive_avg_pool2d(features,(1,1))
                 weights_value = weights.cpu().numpy()
+                # weights_value = np.clip(weights_value,-1e-7, 1)
                 # weights_value = np.reshape(weights_value, (weights_value.shape[1],))
-                # print(weights_value.shape)
-                # print(weights_value[:10])
+                print(weights_value.shape)
+                #print(weights_value[0])
 
                 features_value = features.cpu().numpy()
                 print(weights_value.shape, features_value.shape)
-
+                print(features_value[0][0][0])
                 heatmap = weights_value*features_value
-                print(heatmap.shape )
 
+                print(heatmap.shape, heatmap[0][0][0])
                 heatmap = np.mean(heatmap, axis = 1)
-                print(heatmap.shape )
+                print(heatmap.shape, heatmap[0][0])
+                #b
+
                 heatmap = np.maximum(heatmap, 0)
                 heatmap = heatmap[0]
+                
                 #heatmap = np.reshape(heatmap, (heatmap.shape[1], heatmap.shape[2]))
                 print(heatmap.shape )
 
                 origin_img = cv2.imread(img_names[0])
-                print(origin_img.shape)
+                #print(origin_img.shape)
 
+                
                 # We resize the heatmap to have the same size as the original image
                 heatmap = cv2.resize(heatmap, (origin_img.shape[1], origin_img.shape[0]))
+                # cv2.imwrite(os.path.join(save_dir, "mask0_"+os.path.basename(img_names[0])), 
+                #                 heatmap)
+
                 # We convert the heatmap to RGB
                 heatmap = np.uint8(255 * heatmap)
 
+                # cv2.imwrite(os.path.join(save_dir, "mask1_"+os.path.basename(img_names[0])), 
+                #                 heatmap)
                 # We apply the heatmap to the original image
                 heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-                cv2.imwrite(os.path.join(save_dir, "mask_"+os.path.basename(img_names[0])), 
+                cv2.imwrite(os.path.join(save_dir, "mask2_"+os.path.basename(img_names[0])), 
                                 heatmap)
 
                 # 0.4 here is a heatmap intensity factor
@@ -189,7 +212,38 @@ class FireRunner():
                 if c==count:
                     return
 
+    def cleanData(self, data_loader, target_label, move_dir):
+        """
+        input: data, move_path
+        output: None
 
+        """
+        self.model.eval()
+        
+        #predict
+        #res_list = []
+        count = 0
+        with torch.no_grad():
+            #end = time.time()
+            for i, (inputs, target, img_names) in enumerate(data_loader):
+                print("\r",str(i)+"/"+str(data_loader.__len__()),end="",flush=True)
+
+                inputs = inputs.cuda()
+
+                output = self.model(inputs)
+                output = nn.Softmax(dim=1)(output)
+                output = output.data.cpu().numpy()
+
+                for i in range(output.shape[0]):
+
+                    output_one = output[i][np.newaxis, :]
+
+                    if np.argmax(output_one)!=target_label:
+                        print(output_one, target_label,img_names[i])
+                        img_name = os.path.basename(img_names[i])
+                        os.rename(img_names[i], os.path.join(move_dir,img_name))
+                        count += 1
+        print("[INFO] Total: ",count)
 
     def evaluate(self, data_loader):
         self.model.eval()
@@ -376,6 +430,7 @@ class FireRunner():
         self.val_acc =  self.correct / len(val_loader.dataset)
 
         if 'F1' in self.cfg['metrics']:
+            #print(labels)
             precision, recall, f1_score = getF1(pres, labels)
             print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}%, precision: {:.5f}, recall: {:.5f}, f1_score: {:.5f}\n'.format(
                 self.val_loss, 100. * self.val_acc, precision, recall, f1_score))
@@ -402,34 +457,10 @@ class FireRunner():
                 self.scheduler.step()
 
 
-        #print("---")
-        #print(val_acc, early_stop_value, early_stop_dist)
-        if self.val_acc>self.early_stop_value:
-            self.early_stop_value = self.val_acc
-            self.early_stop_dist = 0
-                
-            if self.cfg['save_best_only']:
-                if self.last_save_path is not None and os.path.exists(self.last_save_path):
-                    os.remove(self.last_save_path)
-            save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.val_acc)
-            self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
-            torch.save(self.model.state_dict(), self.last_save_path)
+        self.checkpoint(epoch)
+        self.earlyStop(epoch)
 
         
-
-        
-
-        self.early_stop_dist+=1
-        if self.early_stop_dist>self.cfg['early_stop_patient']:
-            self.best_epoch = epoch-self.cfg['early_stop_patient']+1
-            print("[INFO] Early Stop with patient %d , best is Epoch - %d :%f" % (self.cfg['early_stop_patient'],self.best_epoch,self.early_stop_value))
-            self.earlystop = True
-        if  epoch+1==self.cfg['epochs']:
-            self.best_epoch = epoch-self.early_stop_dist+2
-            print("[INFO] Finish trainging , best is Epoch - %d :%f" % (self.best_epoch,self.early_stop_value))
-            self.earlystop = True
-
-
 
 
     def onTest(self):
@@ -456,38 +487,42 @@ class FireRunner():
         return res_list
 
 
-    def cleanData(self, data_loader, target_label, move_dir):
-        """
-        input: data, move_path
-        output: None
 
-        """
-        self.model.eval()
+    def earlyStop(self, epoch):
+        ### earlystop
+        if self.val_acc>self.early_stop_value:
+            self.early_stop_value = self.val_acc
+            self.early_stop_dist = 0
+
+        self.early_stop_dist+=1
+        if self.early_stop_dist>self.cfg['early_stop_patient']:
+            self.best_epoch = epoch-self.cfg['early_stop_patient']+1
+            print("[INFO] Early Stop with patient %d , best is Epoch - %d :%f" % (self.cfg['early_stop_patient'],self.best_epoch,self.early_stop_value))
+            self.earlystop = True
+        if  epoch+1==self.cfg['epochs']:
+            self.best_epoch = epoch-self.early_stop_dist+2
+            print("[INFO] Finish trainging , best is Epoch - %d :%f" % (self.best_epoch,self.early_stop_value))
+            self.earlystop = True
+
+    def checkpoint(self, epoch):
         
-        #predict
-        #res_list = []
-        count = 0
-        with torch.no_grad():
-            #end = time.time()
-            for i, (inputs, target, img_names) in enumerate(data_loader):
-                print("\r",str(i)+"/"+str(data_loader.__len__()),end="",flush=True)
-
-                inputs = inputs.cuda()
-
-                output = self.model(inputs)
-                output = nn.Softmax(dim=1)(output)
-                output = output.data.cpu().numpy()
-
-                for i in range(output.shape[0]):
-
-                    output_one = output[i][np.newaxis, :]
-
-                    if np.argmax(output_one)!=target_label:
-                        print(output_one, target_label,img_names[i])
-                        img_name = os.path.basename(img_names[i])
-                        os.rename(img_names[i], os.path.join(move_dir,img_name))
-                        count += 1
-        print("[INFO] Total: ",count)
+        if self.val_acc<self.early_stop_value:
+            if self.cfg['save_best_only']:
+                pass
+            else:
+                save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.val_acc)
+                self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
+                if self.cfg['save_one_only']:
+                    if self.last_save_path is not None and os.path.exists(self.last_save_path):
+                        os.remove(self.last_save_path)
+                self.modelSave(self.last_save_path)
+        else:
+            save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.val_acc)
+            self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
+            if self.cfg['save_one_only']:
+                if self.last_save_path is not None and os.path.exists(self.last_save_path):
+                    os.remove(self.last_save_path)
+            self.modelSave(self.last_save_path)
 
 
 
@@ -498,8 +533,8 @@ class FireRunner():
         if data_parallel:
             self.model = torch.nn.DataParallel(self.model)
 
-    def modelSave(self):
-        pass
+    def modelSave(self, save_name):
+        torch.save(self.model.state_dict(), save_name)
 
     def toOnnx(self, save_name= "model.onnx"):
         dummy_input = torch.randn(1, 3, self.cfg['img_size'][0], self.cfg['img_size'][1]).to(self.device)

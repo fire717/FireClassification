@@ -72,6 +72,10 @@ class FireModel(nn.Module):
             #print(self.features[13])
             # print(self.features)
             # b
+
+            # self.classifier = self.pretrain_model.classifier
+            # self.classifier[1] = nn.Linear(in_features, self.cfg['class_number'])
+
             self.classifier = nn.Sequential(
                 nn.Dropout(p=self.cfg['dropout']),    # refer to paper section 6
                 nn.Linear(in_features, self.cfg['class_number']),

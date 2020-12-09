@@ -9,4 +9,3 @@ efficientnet_pytorch
 scikit-learn
 pretrainedmodels
 albumentations
-tensorboard

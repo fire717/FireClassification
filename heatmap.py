@@ -15,8 +15,8 @@ def main(cfg):
 
 
     model = FireModel(cfg)
-    
-    
+    # print(model)
+    # b
 
     data = FireData(cfg)
     # data.showTrainData()
@@ -30,7 +30,7 @@ def main(cfg):
     #print(model)
     runner.modelLoad(cfg['model_path'], data_parallel = False)
 
-    show_count = 3
+    show_count = 1
     runner.heatmap(test_loader, cfg["save_dir"], show_count)
 
 

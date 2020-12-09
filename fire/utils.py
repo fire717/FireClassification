@@ -15,7 +15,7 @@ def setRandomSeed(seed=42):
 
     Example
     -------
-    seed_reproducer(seed=2019).
+    setRandomSeed(seed=2019).
     """
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)

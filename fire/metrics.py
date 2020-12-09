@@ -29,10 +29,10 @@ def getF1(pres, labels):
     # print(pres.shape, labels.shape)
     # print(pres[0])
     # print(labels[0])
+    precision = tp/(tp+fp+1e-7)
+    recall = tp/(tp+fn+1e-7)
 
-    precision = tp/(tp+fp)
-    recall = tp/(tp+fn)
-    f1_score = 2*recall*precision / (recall+precision)
+    f1_score = 2*recall*precision / (recall+precision+1e-7)
     return precision, recall, f1_score
 
 
