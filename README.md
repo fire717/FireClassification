@@ -48,9 +48,10 @@ Read the documentation at source code.
 * 增加使用文档
 * 彻底分离用户自定义部分的代码
 * tensorboard可视化
-* 特征图热力图可视化
+* 特征图热力图可视化(grad-cam)
 
 ## 四、参考资源
 1. [albumentations](https://github.com/albumentations-team/albumentations)
 2. [warmup](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
 3. [Ranger](https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer)
+4. [pytorch-grad-cam](https://github.com/jacobgil/pytorch-grad-cam)

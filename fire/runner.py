@@ -8,12 +8,77 @@ import numpy as np
 import cv2
 
 from torch.utils.tensorboard import SummaryWriter
+import torch.nn.functional as F
 
 from fire.runnertools import getSchedu, getOptimizer, getLossFunc
 from fire.runnertools import clipGradient, writeLogs
 from fire.metrics import getF1
 from fire.scheduler import GradualWarmupScheduler
 from fire.utils import printDash
+
+
+
+class FeatureExtractor():
+    #https://github.com/jacobgil/pytorch-grad-cam
+    """ Class for extracting activations and 
+    registering gradients from targetted intermediate layers """
+
+    def __init__(self, model, target_layers):
+        self.model = model
+        self.target_layers = target_layers
+        self.gradients = []
+
+    def save_gradient(self, grad):
+        self.gradients.append(grad)
+
+    def __call__(self, x):
+        outputs = []
+        self.gradients = []
+        # print(self.model._modules.items())
+        for name, module in self.model._modules.items():
+            # print(name, module)
+            x = module(x)
+            if name in self.target_layers:
+                # print(name, module, '111')
+                x.register_hook(self.save_gradient)
+                outputs += [x]
+        # b
+        return outputs, x
+
+
+class ModelOutputs():
+    """ Class for making a forward pass, and getting:
+    1. The network output.
+    2. Activations from intermeddiate targetted layers.
+    3. Gradients from intermeddiate targetted layers. """
+
+    def __init__(self, model, feature_module, target_layers):
+        self.model = model
+        self.feature_module = feature_module
+        self.feature_extractor = FeatureExtractor(self.feature_module, target_layers)
+
+    def get_gradients(self):
+        return self.feature_extractor.gradients
+
+    def __call__(self, x):
+        target_activations = []
+        print(len(self.model.features._modules.items()))
+        for name, module in self.model.features._modules.items():
+            if module == self.feature_module:
+                print(name, module)
+                target_activations, x = self.feature_extractor(x)
+            else:
+                x = module(x)
+
+            
+        
+        x = x.mean(3).mean(2)        #best 99919
+        x = self.model.classifier(x)
+        #bself.pretrain_model self.features self.classifier
+
+        return target_activations, x
+
+
 
 
 class FireRunner():
@@ -31,6 +96,8 @@ class FireRunner():
             self.device = torch.device("cpu")
 
         self.model = model.to(self.device)
+
+
 
         ############################################################
         
@@ -56,8 +123,8 @@ class FireRunner():
                                                 total_epoch=self.cfg['warmup_epoch'], 
                                                 after_scheduler=self.scheduler)
 
+        self.extractor = ModelOutputs(self.model, self.model.features[12], ['0'])
 
-        
 
     def freezeBeforeLinear(self, epoch, freeze_epochs = 2):
         if epoch<freeze_epochs:
@@ -129,23 +196,89 @@ class FireRunner():
         self.model.eval()
         c = 0
 
+
         res_dict = {}
-        with torch.no_grad():
-            pres = []
-            labels = []
-            for (data, img_names) in data_loader:
-                data = data.to(self.device)
+        # with torch.no_grad():
+
+        # x=torch.randn(3)
+        # x=torch.autograd.Variable(x,requires_grad=True)#生成变量
+        # print(x)#输出x的值
+        # y=x*2
+        # y = y.requires_grad_(True) 
+        # y.backward(torch.FloatTensor([1,0.1,0.01]))#自动求导
+        # print(x.grad)#求对x的梯度
+        # print(x)
+        # b
+
+        pres = []
+        labels = []
+        show = 1
+        for (data, img_names) in data_loader:
+            data = data.to(self.device)
 
 
-                # print(self.model.features[:])
-                # b
-                # res
-                output = self.model(data).double()
-                print('output', output)
-                pred = nn.Softmax(dim=1)(output)
-                print("pre: ", pred.cpu())
+            features, output = self.extractor(data)
+            print(np.array(features).shape, features[0].shape)
+            print(output.shape)
+            # output = self.model(data).double()
+            if show:
+                print('output: ', output, img_names)
+                show = 0
+            # pred = nn.Softmax(dim=1)(output)
+            # print("pre: ", pred.cpu())
 
 
+            ###  grad-CAM
+            # print(self.model.features[12][0])
+            # b
+            # 利用onehot的形式锁定目标类别
+            one_hot = np.zeros((1, output.size()[-1]), dtype=np.float32)
+            one_hot[0][0] = 1
+            one_hot = torch.from_numpy(one_hot)
+            # 获取目标类别的输出,该值带有梯度链接关系,可进行求导操作
+            one_hot = torch.sum(one_hot.to(self.device) * output).requires_grad_(True) 
+            self.model.zero_grad()
+            one_hot.backward(retain_graph=True) # backward 求导
+            # 获取对应特征层的梯度map
+            #print(self.extractor.get_gradients().shape)
+            grads_val = self.extractor.get_gradients()[-1].cpu().data.numpy()
+            # grads_val = self.model.features[12][0].grad
+            print(grads_val.shape)
+            target = features[-1] # 获取目标特征输出
+            target = target.cpu().data.numpy()[0, :]
+
+            weights = np.mean(grads_val, axis=(2, 3))[0, :] # 利用GAP操作, 获取特征权重
+            cam = np.zeros(target.shape[1:], dtype=np.float32)
+            # relu操作,去除负值, 并缩放到原图尺寸
+            for i, w in enumerate(weights):
+                cam += w * target[i, :, :]
+
+            cam = np.maximum(cam, 0)
+            cam = cv2.resize(cam, data.shape[2:])
+            cam = cam - np.min(cam)
+            cam = cam / np.max(cam)
+            print(cam.shape)
+            print(cam[0][:10])
+
+            origin_img = cv2.imread(img_names[0])
+
+            heatmap = np.uint8(255 * cam)
+            heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+            cv2.imwrite(os.path.join(save_dir, "mask1_"+os.path.basename(img_names[0])), 
+                            heatmap)
+            # 0.4 here is a heatmap intensity factor
+            superimposed_img = heatmap * 0.4 + origin_img
+            # Save the image to disk
+            cv2.imwrite(os.path.join(save_dir, os.path.basename(img_names[0])), 
+                            superimposed_img)
+            
+
+            # print(self.model.features[:])
+            # b
+            # res
+            
+            with torch.no_grad():
+                print('-------')
                 features = self.model.features[:13](data)
                 # out = self.model.features[13:](features)
                 # out = out.mean(3).mean(2)        #best 99919
@@ -154,11 +287,6 @@ class FireRunner():
                 # out = self.model.classifier(out)
                 
                 # print('output2', out)
-
-
-
-
-
                 weights = nn.functional.adaptive_avg_pool2d(features,(1,1))
                 weights_value = weights.cpu().numpy()
                 # weights_value = np.clip(weights_value,-1e-7, 1)
@@ -180,33 +308,28 @@ class FireRunner():
                 heatmap = heatmap[0]
                 
                 #heatmap = np.reshape(heatmap, (heatmap.shape[1], heatmap.shape[2]))
-                print(heatmap.shape )
+                #print(heatmap.shape )
 
                 origin_img = cv2.imread(img_names[0])
                 #print(origin_img.shape)
-
-                
                 # We resize the heatmap to have the same size as the original image
                 heatmap = cv2.resize(heatmap, (origin_img.shape[1], origin_img.shape[0]))
                 # cv2.imwrite(os.path.join(save_dir, "mask0_"+os.path.basename(img_names[0])), 
                 #                 heatmap)
-
                 # We convert the heatmap to RGB
                 heatmap = np.uint8(255 * heatmap)
-
                 # cv2.imwrite(os.path.join(save_dir, "mask1_"+os.path.basename(img_names[0])), 
                 #                 heatmap)
                 # We apply the heatmap to the original image
                 heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
                 cv2.imwrite(os.path.join(save_dir, "mask2_"+os.path.basename(img_names[0])), 
                                 heatmap)
-
                 # 0.4 here is a heatmap intensity factor
-                superimposed_img = heatmap * 0.4 + origin_img
+                #superimposed_img = heatmap * 0.4 + origin_img
 
                 # Save the image to disk
-                cv2.imwrite(os.path.join(save_dir, os.path.basename(img_names[0])), 
-                                superimposed_img)
+                # cv2.imwrite(os.path.join(save_dir, os.path.basename(img_names[0])), 
+                #                 superimposed_img)
 
                 c+=1
                 if c==count:
@@ -318,25 +441,38 @@ class FireRunner():
         batch_time = 0
         total_loss = 0
         for batch_idx, (data, target, img_names) in enumerate(train_loader):
+
             one_batch_time_start = time.time()
-            data, target = data.to(self.device), target.to(self.device)
+            
+            
+            if self.cfg['mixup']:
+                alpha = self.cfg['mixup']
+                lam = np.random.beta(alpha,alpha)
+                index = torch.randperm(data.size(0)).to(self.device)
+                data = lam*data + (1-lam)*data[index,:]
+                targets_a, targets_b = target, target[index]
+                data = data.to(self.device)
+                output = self.model(data).double()
+                targets_a, targets_b = targets_a.to(self.device), targets_b.to(self.device)
+                loss = lam * self.loss_func(output, targets_a) + (1 - lam) * self.loss_func(output, targets_b)
 
-            output = self.model(data).double()
+            else:
+                data, target = data.to(self.device), target.to(self.device)
+                output = self.model(data).double()
+                #all_linear2_params = torch.cat([x.view(-1) for x in model.model_feature._fc.parameters()])
+                #l2_regularization = 0.0003 * torch.norm(all_linear2_params, 2)
+                loss = self.loss_func(output, target)# + l2_regularization.item()    
 
-            #all_linear2_params = torch.cat([x.view(-1) for x in model.model_feature._fc.parameters()])
-            #l2_regularization = 0.0003 * torch.norm(all_linear2_params, 2)
-
-            loss = self.loss_func(output, target)# + l2_regularization.item()
-            loss.backward() #计算梯度
 
             total_loss += loss.item()
-
             if self.cfg['clip_gradient']:
                 clipGradient(self.optimizer, self.cfg['clip_gradient'])
 
 
-            self.optimizer.step() #更新参数
+            
             self.optimizer.zero_grad()#把梯度置零
+            loss.backward() #计算梯度
+            self.optimizer.step() #更新参数
 
             ### train acc
             pred_score = nn.Softmax(dim=1)(output)
@@ -422,6 +558,7 @@ class FireRunner():
                 pres.extend(batch_pred_score)
                 labels.extend(batch_label_score)
 
+        print('\n',output[0],img_names[0])
         pres = np.array(pres)
         labels = np.array(labels)
         #print(pres.shape, labels.shape)
@@ -543,3 +680,5 @@ class FireRunner():
                         dummy_input, 
                         os.path.join(self.cfg['save_dir'],save_name), 
                         verbose=True)
+
+

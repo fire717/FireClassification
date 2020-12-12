@@ -32,7 +32,6 @@ class FireData():
                 train_data = train_data[:self.cfg['try_to_train_items']]
                 val_data = val_data[:self.cfg['try_to_train_items']]
 
-
         else:
             print("[INFO] val_path is none, use kflod to split data: k=%d start_fold=%d" % (self.cfg['k_flod'],self.cfg['start_fold']))
             data_names = getFileNames(self.cfg['train_path'])
@@ -46,8 +45,9 @@ class FireData():
                 data_names = data_names[:self.cfg['try_to_train_items']]
 
             folds = KFold(n_splits=self.cfg['k_flod'], shuffle=False)
+            data_iter = folds.split(data_names)
             for fid in range(self.cfg['k_flod']):
-                train_index, val_index = next(folds.split(data_names))
+                train_index, val_index = next(data_iter)
                 if fid == self.cfg['start_fold']:
                     break
 
