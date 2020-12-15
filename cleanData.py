@@ -29,8 +29,10 @@ def main(cfg):
 
     runner.modelLoad(cfg['model_path'])
 
-    move_dir = "../data/dataset/d_trainval/v8/tmp"
-    target_label = 0
+    move_dir = '../data/dataset/d_trainval/v8/tmp'
+    #"../data/dataset/a_raw_data/3_our/0_bigimg/add/antispoof20201214/true"
+    #"../data/dataset/d_trainval/v8/tmp"
+    target_label = 1
     runner.cleanData(train_loader, target_label, move_dir)
 
 

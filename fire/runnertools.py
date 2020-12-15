@@ -49,7 +49,8 @@ def getLossFunc(device, cfg):
         gamma = float(cfg['loss'].strip().split('-')[1])
         loss_func = FocalLoss(label_smooth=cfg['label_smooth'],
                             gamma=gamma,
-                            weight=loss_weight).to(device)
+                            weight=loss_weight,
+                            device=device).to(device)
 
 
     else:

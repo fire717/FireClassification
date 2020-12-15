@@ -277,63 +277,63 @@ class FireRunner():
             # b
             # res
             
-            with torch.no_grad():
-                print('-------')
-                features = self.model.features[:13](data)
-                # out = self.model.features[13:](features)
-                # out = out.mean(3).mean(2)        #best 99919
-                # # print(out.shape)
-                # # b
-                # out = self.model.classifier(out)
+            # with torch.no_grad():
+            #     print('-------')
+            #     features = self.model.features[:13](data)
+            #     # out = self.model.features[13:](features)
+            #     # out = out.mean(3).mean(2)        #best 99919
+            #     # # print(out.shape)
+            #     # # b
+            #     # out = self.model.classifier(out)
                 
-                # print('output2', out)
-                weights = nn.functional.adaptive_avg_pool2d(features,(1,1))
-                weights_value = weights.cpu().numpy()
-                # weights_value = np.clip(weights_value,-1e-7, 1)
-                # weights_value = np.reshape(weights_value, (weights_value.shape[1],))
-                print(weights_value.shape)
-                #print(weights_value[0])
+            #     # print('output2', out)
+            #     weights = nn.functional.adaptive_avg_pool2d(features,(1,1))
+            #     weights_value = weights.cpu().numpy()
+            #     # weights_value = np.clip(weights_value,-1e-7, 1)
+            #     # weights_value = np.reshape(weights_value, (weights_value.shape[1],))
+            #     print(weights_value.shape)
+            #     #print(weights_value[0])
 
-                features_value = features.cpu().numpy()
-                print(weights_value.shape, features_value.shape)
-                print(features_value[0][0][0])
-                heatmap = weights_value*features_value
+            #     features_value = features.cpu().numpy()
+            #     print(weights_value.shape, features_value.shape)
+            #     print(features_value[0][0][0])
+            #     heatmap = weights_value*features_value
 
-                print(heatmap.shape, heatmap[0][0][0])
-                heatmap = np.mean(heatmap, axis = 1)
-                print(heatmap.shape, heatmap[0][0])
-                #b
+            #     print(heatmap.shape, heatmap[0][0][0])
+            #     heatmap = np.mean(heatmap, axis = 1)
+            #     print(heatmap.shape, heatmap[0][0])
+            #     #b
 
-                heatmap = np.maximum(heatmap, 0)
-                heatmap = heatmap[0]
+            #     heatmap = np.maximum(heatmap, 0)
+            #     heatmap = heatmap[0]
                 
-                #heatmap = np.reshape(heatmap, (heatmap.shape[1], heatmap.shape[2]))
-                #print(heatmap.shape )
+            #     #heatmap = np.reshape(heatmap, (heatmap.shape[1], heatmap.shape[2]))
+            #     #print(heatmap.shape )
 
-                origin_img = cv2.imread(img_names[0])
-                #print(origin_img.shape)
-                # We resize the heatmap to have the same size as the original image
-                heatmap = cv2.resize(heatmap, (origin_img.shape[1], origin_img.shape[0]))
-                # cv2.imwrite(os.path.join(save_dir, "mask0_"+os.path.basename(img_names[0])), 
-                #                 heatmap)
-                # We convert the heatmap to RGB
-                heatmap = np.uint8(255 * heatmap)
-                # cv2.imwrite(os.path.join(save_dir, "mask1_"+os.path.basename(img_names[0])), 
-                #                 heatmap)
-                # We apply the heatmap to the original image
-                heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-                cv2.imwrite(os.path.join(save_dir, "mask2_"+os.path.basename(img_names[0])), 
-                                heatmap)
-                # 0.4 here is a heatmap intensity factor
-                #superimposed_img = heatmap * 0.4 + origin_img
+            #     origin_img = cv2.imread(img_names[0])
+            #     #print(origin_img.shape)
+            #     # We resize the heatmap to have the same size as the original image
+            #     heatmap = cv2.resize(heatmap, (origin_img.shape[1], origin_img.shape[0]))
+            #     # cv2.imwrite(os.path.join(save_dir, "mask0_"+os.path.basename(img_names[0])), 
+            #     #                 heatmap)
+            #     # We convert the heatmap to RGB
+            #     heatmap = np.uint8(255 * heatmap)
+            #     # cv2.imwrite(os.path.join(save_dir, "mask1_"+os.path.basename(img_names[0])), 
+            #     #                 heatmap)
+            #     # We apply the heatmap to the original image
+            #     heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+            #     cv2.imwrite(os.path.join(save_dir, "mask2_"+os.path.basename(img_names[0])), 
+            #                     heatmap)
+            #     # 0.4 here is a heatmap intensity factor
+            #     #superimposed_img = heatmap * 0.4 + origin_img
 
-                # Save the image to disk
-                # cv2.imwrite(os.path.join(save_dir, os.path.basename(img_names[0])), 
-                #                 superimposed_img)
+            #     # Save the image to disk
+            #     # cv2.imwrite(os.path.join(save_dir, os.path.basename(img_names[0])), 
+            #     #                 superimposed_img)
 
-                c+=1
-                if c==count:
-                    return
+            c+=1
+            if c==count:
+                return
 
     def cleanData(self, data_loader, target_label, move_dir):
         """
@@ -443,25 +443,62 @@ class FireRunner():
         for batch_idx, (data, target, img_names) in enumerate(train_loader):
 
             one_batch_time_start = time.time()
-            
-            
+
+            target = target.to(self.device)
+            #print(len(target.shape))
+            #print(img_names)
             if self.cfg['mixup']:
                 alpha = self.cfg['mixup']
                 lam = np.random.beta(alpha,alpha)
+                # print(lam)
                 index = torch.randperm(data.size(0)).to(self.device)
+                #打乱顺序作为融合的另一批样本
+                # print(index)
                 data = lam*data + (1-lam)*data[index,:]
                 targets_a, targets_b = target, target[index]
                 data = data.to(self.device)
                 output = self.model(data).double()
                 targets_a, targets_b = targets_a.to(self.device), targets_b.to(self.device)
+                # print(target)
+                # print(targets_a)
+                # print(targets_b)
+                # b
                 loss = lam * self.loss_func(output, targets_a) + (1 - lam) * self.loss_func(output, targets_b)
+            
+            # if self.cfg['mixup']:
+            #     alpha = self.cfg['mixup']
+            #     lam = np.random.beta(alpha,alpha)
+            #     # print(lam)
+            #     index = torch.randperm(data.size(0)).to(self.device)
+            #     #打乱顺序作为融合的另一批样本
+            #     # print(index)
+            #     data = lam*data + (1-lam)*data[index,:]
+            #     data = data.to(self.device)
+            #     output = self.model(data).double()
+
+            #     targets_a, targets_b = target, target[index]
+            #     targets_a, targets_b = targets_a.to(self.device), targets_b.to(self.device)
+            #     # print(targets_a)
+            #     # print(targets_b)
+            #     one_hot_targets_a = F.one_hot(targets_a, output.shape[1])
+            #     one_hot_targets_b = F.one_hot(targets_b, output.shape[1])
+            #     # print(one_hot_targets_a)
+            #     # print(one_hot_targets_b)
+            #     target = lam*one_hot_targets_a + (1 - lam) * one_hot_targets_b
+            #     # print(target)
+            #     # print(target.shape[1])
+            #     # b
+            #     loss = self.loss_func(output, target)
+
+                #loss = lam * self.loss_func(output, targets_a) + (1 - lam) * self.loss_func(output, targets_b)
+
 
             else:
-                data, target = data.to(self.device), target.to(self.device)
+                data = data.to(self.device)
                 output = self.model(data).double()
                 #all_linear2_params = torch.cat([x.view(-1) for x in model.model_feature._fc.parameters()])
                 #l2_regularization = 0.0003 * torch.norm(all_linear2_params, 2)
-                loss = self.loss_func(output, target)# + l2_regularization.item()    
+                loss = self.loss_func(output, target, self.cfg['sample_weights'],sample_weight_img_names=img_names)# + l2_regularization.item()    
 
 
             total_loss += loss.item()
@@ -477,7 +514,7 @@ class FireRunner():
             ### train acc
             pred_score = nn.Softmax(dim=1)(output)
             pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
-            if self.cfg['use_distill']:
+            if len(target.shape)>1:
                 target = target.max(1, keepdim=True)[1] 
             correct += pred.eq(target.view_as(pred)).sum().item()
             count += len(data)
@@ -558,7 +595,7 @@ class FireRunner():
                 pres.extend(batch_pred_score)
                 labels.extend(batch_label_score)
 
-        print('\n',output[0],img_names[0])
+        #print('\n',output[0],img_names[0])
         pres = np.array(pres)
         labels = np.array(labels)
         #print(pres.shape, labels.shape)

@@ -1,4 +1,5 @@
 
+# import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -47,19 +48,34 @@ class CrossEntropyLoss(nn.Module):
 
 
 class FocalLoss(nn.Module):
-    def __init__(self, label_smooth=0, gamma = 0., weight=None):
+    def __init__(self, label_smooth=0, gamma = 0., weight=None, device='cpu'):
         super().__init__()
         self.gamma = gamma
         self.weight = weight # means alpha
         self.epsilon = 1e-7
         self.label_smooth = label_smooth
+        self.device = device
         
-    def forward(self, x, y):
+    def forward(self, x, y, sample_weights=0, sample_weight_img_names=None):
 
-        one_hot_label = F.one_hot(y, x.shape[1])
+        if len(y.shape) == 1:
+            #
+            one_hot_label = F.one_hot(y, x.shape[1])
 
-        if self.label_smooth:
-            one_hot_label = labelSmooth(one_hot_label, self.label_smooth)
+            if self.label_smooth:
+                one_hot_label = labelSmooth(one_hot_label, self.label_smooth)
+
+            if sample_weights>0 and sample_weights is not None:
+                #print(sample_weight_img_names)
+                weigths = [sample_weights  if 'yxboard' in img_name  else 1 for img_name in sample_weight_img_names] 
+                weigths = torch.DoubleTensor(weigths).reshape((len(weigths),1)).to(self.device)
+                #print(weigths, weigths.shape)
+                #print(one_hot_label, one_hot_label.shape)
+                one_hot_label = one_hot_label*weigths
+                #print(one_hot_label)
+                #b
+        else:
+            one_hot_label = y
 
 
         #y_pred = F.log_softmax(x, dim=1)

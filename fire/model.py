@@ -65,6 +65,11 @@ class FireModel(nn.Module):
     def changeModelStructure(self):
         ### Change model
         if self.cfg['model_name'] in ['mobilenetv2','mobilenetv3']:
+            #add position
+            # print(self.pretrain_model)
+            # b
+
+
             in_features = self.pretrain_model.classifier[1].in_features
             self.features = self.pretrain_model.features
             #self.avgpool = nn.AdaptiveAvgPool2d(1)
