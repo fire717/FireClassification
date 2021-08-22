@@ -5,6 +5,7 @@ import pretrainedmodels
 from efficientnet_pytorch import EfficientNet
 
 from fire.models.mobilenetv3 import MobileNetV3
+from fire.models.mobileformer_generator import mobile_former
 import torchvision
 
 class FireModel(nn.Module):
@@ -38,6 +39,11 @@ class FireModel(nn.Module):
             #out = out.view(out.size(0), -1) #best 9990
             # print(out.shape)
             # b
+            out = self.classifier(out)
+
+        elif "mobileformer" in self.cfg['model_name']:
+
+            out = self.features(img)
             out = self.classifier(out)
 
 
@@ -86,6 +92,13 @@ class FireModel(nn.Module):
                 nn.Linear(in_features, self.cfg['class_number']),
             )
 
+        elif "mobileformer" in self.cfg['model_name']:
+            self.features = self.pretrain_model
+            self.classifier = nn.Sequential(
+                nn.Linear(self.pretrain_model.project_demension + self.pretrain_model.d_model, self.pretrain_model.fc_demension),
+                nn.ReLU6(inplace=True),
+                nn.Linear(self.pretrain_model.fc_demension, self.cfg['class_number'])
+            )
 
         elif "efficientnet" in self.cfg['model_name']:
             #self.pretrain_model._dropout = nn.Dropout(0.5)
@@ -163,7 +176,19 @@ class FireModel(nn.Module):
             #print(in_features)
             #self.pretrain_model.classifier[1] = nn.Linear(in_features, class_number)
             #print(self.pretrain_model)
-            
+        
+        elif "mobileformer" in self.cfg['model_name']:
+            #model.cpu()
+            num = int(self.cfg['model_name'].strip().split('-')[-1])
+            self.pretrain_model = mobile_former(num)
+            if self.cfg['pretrained']:
+                state_dict = torch.load(self.cfg['pretrained'])
+                self.pretrain_model.load_state_dict(state_dict, strict=True)
+
+            #in_features = self.pretrain_model.classifier[1].in_features
+            #print(in_features)
+            #self.pretrain_model.classifier[1] = nn.Linear(in_features, class_number)
+            #print(self.pretrain_model)
 
 
         elif "efficientnet" in self.cfg['model_name']:

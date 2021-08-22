@@ -13,6 +13,7 @@ import albumentations as A
 import json
 import platform
 
+
 from fire.dataaug_user import TrainDataAug, TestDataAug
 
 
@@ -57,7 +58,7 @@ class TensorDatasetTrainClassify(Dataset):
             
             for i, img_path in enumerate(self.train_jpg):
                 img_dirs = img_path.replace(self.label_path,'')
-                img_dirs = img_dirs.split('/')[:2]
+                img_dirs = img_dirs.split(os.sep)[:2]
                 img_dir = img_dirs[0] if img_dirs[0] else img_dirs[1]
 
                 y = self.cate_dirs.index(img_dir)
@@ -152,7 +153,8 @@ def getNormorlize(model_name):
     elif "EN-B" in model_name:
         my_normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     else:
-        raise Exception("[ERROR] Not found normalize type!")
+        print("[Info] Not found normalize type! Use defalut imagenet normalize.")
+        my_normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     return my_normalize
 
 
@@ -162,22 +164,28 @@ def getDataLoader(mode, input_data, cfg):
 
 
 
+    data_aug_train = TrainDataAug(cfg['img_size'])
+    data_aug_test = TestDataAug(cfg['img_size'])
+
+
     if mode=="trainval_onehot":
         my_dataloader = TensorDatasetTrainClassify
         
         train_loader = torch.utils.data.DataLoader(
-                    my_dataloader(input_data[0],transforms.Compose([
-                                TrainDataAug(cfg['img_size']),
-                                transforms.ToTensor(),
-                                my_normalize,
+                    my_dataloader(input_data[0],
+                                transforms.Compose([
+                                    data_aug_train,
+                                    transforms.ToTensor(),
+                                    my_normalize,
                                 ])),
                         batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
 
         val_loader = torch.utils.data.DataLoader(
-                    my_dataloader(input_data[1],transforms.Compose([
-                                TestDataAug(cfg['img_size']),
-                                transforms.ToTensor(),
-                                my_normalize
+                    my_dataloader(input_data[1],
+                                    transforms.Compose([
+                                    data_aug_test,
+                                    transforms.ToTensor(),
+                                    my_normalize
                                 ])),
                         batch_size=1, shuffle=False, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
         return train_loader, val_loader
@@ -188,8 +196,8 @@ def getDataLoader(mode, input_data, cfg):
 
         test_loader = torch.utils.data.DataLoader(
                 my_dataloader(input_data[0],
-                        transforms.Compose([
-                                    TestDataAug(cfg['img_size']),
+                                transforms.Compose([
+                                    data_aug_test,
                                     transforms.ToTensor(),
                                     my_normalize
                                 ])
@@ -212,32 +220,32 @@ def getDataLoader(mode, input_data, cfg):
             cfg['label_path'] = cfg['train_path']
 
         train_loader = torch.utils.data.DataLoader(
-                                my_dataloader(input_data[0],
+                                        my_dataloader(input_data[0],
                                             cfg['label_type'],
                                             cfg['label_path'],
                                             True,
                                             transforms.Compose([
-                                                TrainDataAug(cfg['img_size']),
+                                                data_aug_train,
                                                 #ImageNetPolicy(),  #autoaug
                                                 #Augmentation(fa_resnet50_rimagenet()), #fastaa
                                                 transforms.ToTensor(),
                                                 my_normalize,
-                                                ])),
+                                        ])),
                                 batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
 
         if cfg['val_path']:
             cfg['label_path'] = cfg['val_path']
 
         val_loader = torch.utils.data.DataLoader(
-                                my_dataloader(input_data[1],
+                                        my_dataloader(input_data[1],
                                             cfg['label_type'],
                                             cfg['label_path'],
                                             True,
                                             transforms.Compose([
-                                                TestDataAug(cfg['img_size']),
+                                                data_aug_test,
                                                 transforms.ToTensor(),
                                                 my_normalize
-                                                ])),
+                                        ])),
                                 batch_size=cfg['batch_size'], shuffle=False, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
         return train_loader, val_loader
 
@@ -259,7 +267,7 @@ def getDataLoader(mode, input_data, cfg):
                                             cfg['label_path'],
                                             False,
                                             transforms.Compose([
-                                                TestDataAug(cfg['img_size']),
+                                                data_aug_test,
                                                 #ImageNetPolicy(),  #autoaug
                                                 #Augmentation(fa_resnet50_rimagenet()), #fastaa
                                                 transforms.ToTensor(),
@@ -280,13 +288,13 @@ def getDataLoader(mode, input_data, cfg):
         if cfg['label_type'] == 'DIR':
             cfg['label_path'] = cfg['val_path']
 
-        train_loader = torch.utils.data.DataLoader(
+        data_loader = torch.utils.data.DataLoader(
                                 my_dataloader(input_data[0],
                                             cfg['label_type'],
                                             cfg['label_path'],
                                             False,
                                             transforms.Compose([
-                                                TestDataAug(cfg['img_size']),
+                                                data_aug_test,
                                                 #ImageNetPolicy(),  #autoaug
                                                 #Augmentation(fa_resnet50_rimagenet()), #fastaa
                                                 transforms.ToTensor(),
@@ -294,5 +302,31 @@ def getDataLoader(mode, input_data, cfg):
                                                 ])),
                                 batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
 
-        return train_loader
+        return data_loader
 
+    elif mode=="eval":
+        my_dataloader = TensorDatasetTrainClassify
+        
+        #auto aug
+
+        #from .autoaugment import ImageNetPolicy
+        # from libs.FastAutoAugment.data import  Augmentation
+        # from libs.FastAutoAugment.archive import fa_resnet50_rimagenet
+        if cfg['label_type'] == 'DIR':
+            cfg['label_path'] = cfg['eval_path']
+
+        data_loader = torch.utils.data.DataLoader(
+                                my_dataloader(input_data[0],
+                                            cfg['label_type'],
+                                            cfg['label_path'],
+                                            False,
+                                            transforms.Compose([
+                                                data_aug_test,
+                                                #ImageNetPolicy(),  #autoaug
+                                                #Augmentation(fa_resnet50_rimagenet()), #fastaa
+                                                transforms.ToTensor(),
+                                                my_normalize,
+                                                ])),
+                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+
+        return data_loader

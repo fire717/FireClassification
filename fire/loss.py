@@ -26,7 +26,7 @@ class CrossEntropyLoss(nn.Module):
         self.label_smooth = label_smooth
         self.epsilon = 1e-7
         
-    def forward(self, x, y):
+    def forward(self, x, y, sample_weights=0, sample_weight_img_names=None):
 
         one_hot_label = F.one_hot(y, x.shape[1])
 

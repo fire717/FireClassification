@@ -6,11 +6,11 @@ from fire.ranger import Ranger
 from fire.loss import FocalLoss, CrossEntropyLoss
 
 def getSchedu(schedu, optimizer):
-    if schedu=='default':
+    if 'default' in schedu:
         factor = float(schedu.strip().split('-')[1])
         patience = int(schedu.strip().split('-')[2])
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 
-                    mode='max', factor=0.2, patience=2,min_lr=0.000001)
+                    mode='max', factor=factor, patience=patience,min_lr=0.000001)
     elif 'step' in schedu:
         step_size = int(schedu.strip().split('-')[1])
         gamma = int(schedu.strip().split('-')[2])
@@ -21,6 +21,8 @@ def getSchedu(schedu, optimizer):
         scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer,
                                                              T_0=T_0, 
                                                             T_mult=T_mult)
+    else:
+        raise Exception("Unkown getSchedu: ", schedu)
     return scheduler
 
 def getOptimizer(optims, model, learning_rate, weight_decay):
@@ -32,6 +34,8 @@ def getOptimizer(optims, model, learning_rate, weight_decay):
         optimizer = AdaBelief(model.parameters(), lr=learning_rate, eps=1e-12, betas=(0.9,0.999))
     elif optims=='Ranger':
         optimizer = Ranger(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    else:
+        raise Exception("Unkown getSchedu: ", optims)
     return optimizer
 
 

@@ -123,7 +123,8 @@ class FireRunner():
                                                 total_epoch=self.cfg['warmup_epoch'], 
                                                 after_scheduler=self.scheduler)
 
-        self.extractor = ModelOutputs(self.model, self.model.features[12], ['0'])
+        if self.cfg['show_heatmap']:
+            self.extractor = ModelOutputs(self.model, self.model.features[12], ['0'])
 
 
     def freezeBeforeLinear(self, epoch, freeze_epochs = 2):
@@ -533,7 +534,7 @@ class FireRunner():
             print_epoch_total = str(self.cfg['epochs'])+''.join([' ']*(4-len(str(self.cfg['epochs']))))
             if batch_idx % self.cfg['log_interval'] == 0:
                 print('\r',
-                    '{}/{} [{}/{} ({:.0f}%)] - ETA: {}, loss: {:.4f}, acc: {:.4f}  LR: {:.6f}'.format(
+                    '{}/{} [{}/{} ({:.0f}%)] - ETA: {}, loss: {:.4f}, acc: {:.4f}  LR: {:f}'.format(
                     print_epoch, print_epoch_total, batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), 
                     datetime.timedelta(seconds=eta),
@@ -625,8 +626,8 @@ class FireRunner():
         if self.cfg['warmup_epoch']:
             self.scheduler.step(epoch)
         else:
-            if self.cfg['scheduler']=='default':
-                self.scheduler.step(val_acc)
+            if 'default' in self.cfg['scheduler']:
+                self.scheduler.step(self.val_acc)
             else:
                 self.scheduler.step()
 
@@ -680,22 +681,19 @@ class FireRunner():
 
     def checkpoint(self, epoch):
         
-        if self.val_acc<self.early_stop_value:
+        if self.val_acc<=self.early_stop_value:
             if self.cfg['save_best_only']:
                 pass
             else:
                 save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.val_acc)
                 self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
-                if self.cfg['save_one_only']:
-                    if self.last_save_path is not None and os.path.exists(self.last_save_path):
-                        os.remove(self.last_save_path)
                 self.modelSave(self.last_save_path)
         else:
-            save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.val_acc)
-            self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
             if self.cfg['save_one_only']:
                 if self.last_save_path is not None and os.path.exists(self.last_save_path):
                     os.remove(self.last_save_path)
+            save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.val_acc)
+            self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
             self.modelSave(self.last_save_path)
 
 

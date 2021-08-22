@@ -7,8 +7,8 @@ from sklearn.model_selection import KFold
 import cv2
 from torchvision import transforms
 
-from fire.datatools import getDataLoader, getFileNames, TrainDataAug
-
+from fire.datatools import getDataLoader, getFileNames
+from fire.dataaug_user import TrainDataAug
 
 
 
@@ -67,28 +67,38 @@ class FireData():
         print("[INFO] Total images: ", len(data_names))
 
         input_data = [data_names]
-        train_loader = getDataLoader("train", 
+        data_loader = getDataLoader("train", 
                                         input_data,
                                         self.cfg)
-        return train_loader
+        return data_loader
 
     def getValDataloader(self):
         data_names = getFileNames(self.cfg['val_path'])
         print("[INFO] Total images: ", len(data_names))
 
         input_data = [data_names]
-        train_loader = getDataLoader("val", 
+        data_loader = getDataLoader("val", 
                                         input_data,
                                         self.cfg)
-        return train_loader
+        return data_loader
+
+    def getEvalDataloader(self):
+        data_names = getFileNames(self.cfg['eval_path'])
+        print("[INFO] Total images: ", len(data_names))
+
+        input_data = [data_names]
+        data_loader = getDataLoader("eval", 
+                                        input_data,
+                                        self.cfg)
+        return data_loader
 
     def getTestDataloader(self):
         data_names = getFileNames(self.cfg['test_path'])
         input_data = [data_names]
-        test_loader = getDataLoader("test", 
+        data_loader = getDataLoader("test", 
                                     input_data,
                                     self.cfg)
-        return test_loader
+        return data_loader
 
 
     def showTrainData(self, show_num = 200):

@@ -22,7 +22,7 @@ def main(cfg):
     # data.showTrainData()
     # b
     
-    train_loader = data.getValDataloader()
+    train_loader = data.getEvalDataloader()
 
 
     runner = FireRunner(cfg, model)
