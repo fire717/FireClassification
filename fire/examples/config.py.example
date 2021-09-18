@@ -61,6 +61,8 @@ cfg = {
 
 
     ### Test
+    'show_heatmap':False,
+    
     'model_path':'output/mobilenetv2_e9_0.93000.pth',#test model
 
     'eval_path':"./data/test",#test with label,get test acc
