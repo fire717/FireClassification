@@ -55,8 +55,8 @@ class TrainDataAug:
         #             p=0.6)(image=img)['image']
 
         
-        # img = A.Resize(self.h,self.w,cv2.INTER_LANCZOS4,p=1)(image=img)['image']
-        # img = A.OneOf([A.GaussianBlur(blur_limit=3, p=0.1),
+        img = A.Resize(self.h,self.w,cv2.INTER_LANCZOS4,p=1)(image=img)['image']
+        # img = A.OneOf([A.GaussianBlur(blur_limit=(3,7), p=0.1),
         #                 A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=0.5),
         #                 A.GaussNoise(var_limit=(10.0, 50.0), mean=0, p=0.4)], 
         #                 p=0.4)(image=img)['image']
@@ -83,7 +83,7 @@ class TestDataAug:
         img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
 
 
-        # img = A.Resize(self.h,self.w,cv2.INTER_LANCZOS4,p=1)(image=img)['image']
+        img = A.Resize(self.h,self.w,cv2.INTER_LANCZOS4,p=1)(image=img)['image']
         img = Image.fromarray(img)
         return img
 
