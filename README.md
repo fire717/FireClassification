@@ -3,9 +3,9 @@
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/fire717/Fire/blob/main/LICENSE)
 
 ## 一、前言
-Fire is a deep learning API written in Python, running on top of the machine learning platform Pytorch.
+Fire is a deep learning Framework written in Python and used for Image Classification task, running on top of the machine learning platform Pytorch.
 
-Read the documentation at source code.
+Read the source code as documentation.
 
 ## 二、使用
 
