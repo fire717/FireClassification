@@ -1,5 +1,4 @@
-from torch.optim.lr_scheduler import _LRScheduler
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import _LRScheduler,ReduceLROnPlateau
 
 
 class GradualWarmupScheduler(_LRScheduler):

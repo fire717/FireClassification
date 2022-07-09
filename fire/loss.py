@@ -19,6 +19,42 @@ class CrossEntropyLossOneHot(nn.Module):
         return torch.mean(torch.sum(-labels * self.log_softmax(preds), -1))
 
 
+class CrossEntropyLossV2(nn.Module):
+    def __init__(self, label_smooth=0, weight=None):
+        super().__init__()
+        self.weight = weight 
+        self.label_smooth = label_smooth
+        self.epsilon = 1e-7
+        
+    def forward(self, x, y, label_smooth=0, gamma=0, sample_weights=None, sample_weight_img_names=None):
+
+        #one_hot_label = F.one_hot(y, x.shape[1])
+        one_hot_label = y
+        if label_smooth:
+            one_hot_label = labelSmooth(one_hot_label, label_smooth)
+
+        #y_pred = F.log_softmax(x, dim=1)
+        # equal below two lines
+        y_softmax = F.softmax(x, 1)
+        #print(y_softmax)
+        y_softmax = torch.clamp(y_softmax, self.epsilon, 1.0-self.epsilon)# avoid nan
+        y_softmaxlog = torch.log(y_softmax)
+
+        # original CE loss
+        loss = -one_hot_label * y_softmaxlog
+
+        if sample_weights:
+            loss = loss*torch.Tensor(sample_weights).to(loss.device)
+
+        #focal loss gamma
+        if gamma:
+            loss = loss*((1-y_softmax)**gamma)
+
+        loss = torch.mean(torch.sum(loss, -1))
+
+        return 
+
+
 class CrossEntropyLoss(nn.Module):
     def __init__(self, label_smooth=0, weight=None):
         super().__init__()
@@ -48,13 +84,13 @@ class CrossEntropyLoss(nn.Module):
 
 
 class FocalLoss(nn.Module):
-    def __init__(self, label_smooth=0, gamma = 0., weight=None, device='cpu'):
+    def __init__(self, label_smooth=0, gamma = 0., weight=None):
         super().__init__()
         self.gamma = gamma
         self.weight = weight # means alpha
         self.epsilon = 1e-7
         self.label_smooth = label_smooth
-        self.device = device
+
         
     def forward(self, x, y, sample_weights=0, sample_weight_img_names=None):
 
@@ -68,7 +104,7 @@ class FocalLoss(nn.Module):
             if sample_weights>0 and sample_weights is not None:
                 #print(sample_weight_img_names)
                 weigths = [sample_weights  if 'yxboard' in img_name  else 1 for img_name in sample_weight_img_names] 
-                weigths = torch.DoubleTensor(weigths).reshape((len(weigths),1)).to(self.device)
+                weigths = torch.DoubleTensor(weigths).reshape((len(weigths),1)).to(x.device)
                 #print(weigths, weigths.shape)
                 #print(one_hot_label, one_hot_label.shape)
                 one_hot_label = one_hot_label*weigths

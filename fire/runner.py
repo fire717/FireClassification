@@ -163,6 +163,32 @@ class FireRunner():
         self.onTrainEnd()
 
 
+    def predictRaw(self, data_loader):
+        self.model.eval()
+        correct = 0
+
+        res_dict = {}
+        with torch.no_grad():
+            # pres = []
+            # labels = []
+            for (data, img_names) in data_loader:
+                data = data.to(self.device)
+
+                output = self.model(data).double()
+
+
+                #print(output.shape)
+                pred_score = nn.Softmax(dim=1)(output)
+                #print(pred_score.shape)
+                pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+
+                batch_pred_score = pred_score.data.cpu().numpy().tolist()
+                for i in range(len(batch_pred_score)):
+                    res_dict[os.path.basename(img_names[i])] = pred_score[i].cpu().numpy()
+
+        # pres = np.array(pres)
+
+        return res_dict
 
     def predict(self, data_loader):
         self.model.eval()
@@ -170,8 +196,8 @@ class FireRunner():
 
         res_dict = {}
         with torch.no_grad():
-            pres = []
-            labels = []
+            # pres = []
+            # labels = []
             for (data, img_names) in data_loader:
                 data = data.to(self.device)
 
@@ -187,8 +213,7 @@ class FireRunner():
                 for i in range(len(batch_pred_score)):
                     res_dict[os.path.basename(img_names[i])] = pred[i].item()
 
-
-        pres = np.array(pres)
+        # pres = np.array(pres)
 
         return res_dict
 
@@ -487,7 +512,9 @@ class FireRunner():
 
             print_epoch = ''.join([' ']*(4-len(str(epoch+1))))+str(epoch+1)
             print_epoch_total = str(self.cfg['epochs'])+''.join([' ']*(4-len(str(self.cfg['epochs']))))
-            if batch_idx % self.cfg['log_interval'] == 0:
+
+            log_interval = 10
+            if batch_idx % log_interval== 0:
                 print('\r',
                     '{}/{} [{}/{} ({:.0f}%)] - ETA: {}, loss: {:.4f}, acc: {:.4f}  LR: {:f}'.format(
                     print_epoch, print_epoch_total, batch_idx * len(data), len(train_loader.dataset),
@@ -549,13 +576,14 @@ class FireRunner():
 
         self.val_loss /= len(val_loader.dataset)
         self.val_acc =  self.correct / len(val_loader.dataset)
+        self.best_score = self.val_acc 
 
         if 'F1' in self.cfg['metrics']:
             #print(labels)
             precision, recall, f1_score = getF1(pres, labels)
             print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}%, precision: {:.5f}, recall: {:.5f}, f1_score: {:.5f}\n'.format(
                 self.val_loss, 100. * self.val_acc, precision, recall, f1_score))
-
+            self.best_score = f1_score 
 
         else:
             print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}% \n'.format(
@@ -566,7 +594,7 @@ class FireRunner():
             self.scheduler.step(epoch)
         else:
             if 'default' in self.cfg['scheduler']:
-                self.scheduler.step(self.val_acc)
+                self.scheduler.step(self.best_score)
             else:
                 self.scheduler.step()
 
@@ -604,8 +632,8 @@ class FireRunner():
 
     def earlyStop(self, epoch):
         ### earlystop
-        if self.val_acc>self.early_stop_value:
-            self.early_stop_value = self.val_acc
+        if self.best_score>self.early_stop_value:
+            self.early_stop_value = self.best_score
             self.early_stop_dist = 0
 
         self.early_stop_dist+=1
@@ -620,18 +648,18 @@ class FireRunner():
 
     def checkpoint(self, epoch):
         
-        if self.val_acc<=self.early_stop_value:
+        if self.best_score<=self.early_stop_value:
             if self.cfg['save_best_only']:
                 pass
             else:
-                save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.val_acc)
+                save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.best_score)
                 self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
                 self.modelSave(self.last_save_path)
         else:
             if self.cfg['save_one_only']:
                 if self.last_save_path is not None and os.path.exists(self.last_save_path):
                     os.remove(self.last_save_path)
-            save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.val_acc)
+            save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.best_score)
             self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
             self.modelSave(self.last_save_path)
 

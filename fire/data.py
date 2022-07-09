@@ -106,6 +106,7 @@ class FireData():
 
         show_dir = "show_img"
         show_path = os.path.join(self.cfg['save_dir'], show_dir)
+        print("[INFO] Showing traing data in ",show_path)
         if not os.path.exists(show_path):
             os.makedirs(show_path)
 

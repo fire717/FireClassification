@@ -31,8 +31,6 @@ def getFileNames(file_dir, tail_list=['.png','.jpg','.JPG','.PNG']):
 
 ######## dataloader
 
-
-
 class TensorDatasetTrainClassify(Dataset):
     _print_times = 0
     def __init__(self, train_jpg, label_type, label_path, log_classname=True, transform=None):
@@ -153,7 +151,7 @@ def getNormorlize(model_name):
     elif "EN-B" in model_name:
         my_normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     else:
-        print("[Info] Not found normalize type! Use defalut imagenet normalize.")
+        print("[Info] Not set normalize type! Use defalut imagenet normalization.")
         my_normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     return my_normalize
 
@@ -178,7 +176,7 @@ def getDataLoader(mode, input_data, cfg):
                                     transforms.ToTensor(),
                                     my_normalize,
                                 ])),
-                        batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+                        batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
 
         val_loader = torch.utils.data.DataLoader(
                     my_dataloader(input_data[1],
@@ -187,7 +185,7 @@ def getDataLoader(mode, input_data, cfg):
                                     transforms.ToTensor(),
                                     my_normalize
                                 ])),
-                        batch_size=1, shuffle=False, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+                        batch_size=1, shuffle=False, num_workers=cfg['num_workers'], pin_memory=True)
         return train_loader, val_loader
 
 
@@ -202,7 +200,7 @@ def getDataLoader(mode, input_data, cfg):
                                     my_normalize
                                 ])
                 ), batch_size=cfg['test_batch_size'], shuffle=False, 
-                num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory']
+                num_workers=cfg['num_workers'], pin_memory=True
             )
 
         return test_loader
@@ -231,7 +229,7 @@ def getDataLoader(mode, input_data, cfg):
                                                 transforms.ToTensor(),
                                                 my_normalize,
                                         ])),
-                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
 
         if cfg['val_path']:
             cfg['label_path'] = cfg['val_path']
@@ -246,7 +244,7 @@ def getDataLoader(mode, input_data, cfg):
                                                 transforms.ToTensor(),
                                                 my_normalize
                                         ])),
-                                batch_size=cfg['batch_size'], shuffle=False, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+                                batch_size=cfg['batch_size'], shuffle=False, num_workers=cfg['num_workers'], pin_memory=True)
         return train_loader, val_loader
 
 
@@ -273,7 +271,7 @@ def getDataLoader(mode, input_data, cfg):
                                                 transforms.ToTensor(),
                                                 my_normalize,
                                                 ])),
-                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
 
         return train_loader
 
@@ -300,7 +298,7 @@ def getDataLoader(mode, input_data, cfg):
                                                 transforms.ToTensor(),
                                                 my_normalize,
                                                 ])),
-                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
 
         return data_loader
 
@@ -327,6 +325,6 @@ def getDataLoader(mode, input_data, cfg):
                                                 transforms.ToTensor(),
                                                 my_normalize,
                                                 ])),
-                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=cfg['pin_memory'])
+                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
 
         return data_loader

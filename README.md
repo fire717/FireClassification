@@ -20,8 +20,13 @@ Read the source code as documentation.
 依次修改fire/model.py相应代码即可。
 
 ## 三、功能
-### 1.已支持网络
-#### 分类
+### 0.数据加载
+* 文件夹形式
+* csv标签形式
+* 其它自定义形式需手动修改代码
+
+### 1.支持网络
+
 * Resnet系列，Densenet系列，VGGnet系列等所有[pretrained-models.pytorch](https://github.com/Cadene/pretrained-models.pytorch)支持的网络
 * [Mobilenetv2](https://pytorch.org/docs/stable/torchvision/models.html?highlight=mobilenet#torchvision.models.mobilenet_v2)，[Mbilenetv3](https://github.com/kuan-wang/pytorch-mobilenet-v3)，ShuffleNetV2，[MicroNet](https://github.com/liyunsheng13/micronet)
 * [EfficientNet](https://github.com/lukemelas/EfficientNet-PyTorch)
@@ -61,9 +66,9 @@ Read the source code as documentation.
  
 
 ## 四、Update
-* 2022.7 [v0.1.0] [根据这半年打比赛经验，增加一些东西，删除一些几乎不用的东西。] 增加convnext、swin transformer、半精度训练，删除mobileformer，删除日志、tensorboard（习惯用文档记录），优化readme
-* 2021.8 v0.0.9 增加micronet和测试结果，增加rk3399测速
-* 2021.8 v0.0.8 增加mobileformer，加入fashion mnist数据集使用demo，方便测试各种模型，同时加入部分网络的训练结果
+* 2022.7 [v1.0] (根据这半年打比赛经验，增加一些东西，删除一些几乎不用的东西。) 增加convnext、swin transformer、半精度训练，删除mobileformer，删除日志、tensorboard（习惯用文档记录），优化readme
+* 2021.8 [v0.9] 增加micronet和测试结果，增加rk3399测速
+* 2021.8 [v0.8] 增加mobileformer，加入fashion mnist数据集使用demo，方便测试各种模型，同时加入部分网络的训练结果
 
 ## 五、To Do
 * 完善Readme

@@ -3,12 +3,12 @@ import torch.nn as nn
 
 import pretrainedmodels
 
-from .mobilenetv3 import MobileNetV3
-from .micronet import MicroNet
+from fire.models.mobilenetv3 import MobileNetV3
+from fire.models.micronet import MicroNet
 
-from .myefficientnet_pytorch import EfficientNet
-from .convnext import *
-from .swin import build_model,get_config
+from fire.models.myefficientnet_pytorch import EfficientNet
+from fire.models.convnext import convnext_tiny,convnext_small,convnext_base,convnext_large
+from fire.models.swin import build_model,get_config
 
 
 import torchvision

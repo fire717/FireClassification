@@ -36,10 +36,12 @@ def getF1(pres, labels):
     return precision, recall, f1_score
 
 
+def getMF1(pres, labels):
+    pass
 
 ### mAP
-def voc_ap(rec, prec, use_07_metric=False):
-    """ ap = voc_ap(rec, prec, [use_07_metric])
+def vocAP(rec, prec, use_07_metric=False):
+    """ ap = vocAP(rec, prec, [use_07_metric])
     Compute VOC AP given precision and recall.
     If use_07_metric is true, uses the
     VOC 07 11 point method (default:False).
@@ -74,7 +76,7 @@ def voc_ap(rec, prec, use_07_metric=False):
 
 
 # 计算每个类别对应的AP，mAP是所有类别AP的平均值
-def voc_eval(result_json_path,classname,use_07_metric=False):
+def vocEval(result_json_path,classname,use_07_metric=False):
     
     with open(result_json_path,'r') as f:
         result_json = json.loads(f.readlines()[0])  
@@ -107,12 +109,12 @@ def voc_eval(result_json_path,classname,use_07_metric=False):
     # avoid divide by zero in case the first detection matches a difficult
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
-    ap = voc_ap(rec, prec, use_07_metric)
+    ap = vocAP(rec, prec, use_07_metric)
 
     return rec, prec, ap
 
 # 计算每个类别对应的AP，mAP是所有类别AP的平均值
-def voc_test(result_json_path,classname, label_json_path):
+def vocTest(result_json_path,classname, label_json_path):
     
     with open(result_json_path,'r') as f:
         result_json = json.loads(f.readlines()[0])  
@@ -149,26 +151,17 @@ def voc_test(result_json_path,classname, label_json_path):
     # avoid divide by zero in case the first detection matches a difficult
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
-    ap = voc_ap(rec, prec)
+    ap = vocAP(rec, prec)
 
     return rec, prec, ap
 
 
-# def get_val_mAP(result_json_path, classname_list):
-#     AP_list = []
-#     for classname in classname_list:
 
-#         rec, prec, ap = voc_eval(result_json_path, classname)
-#         #print(classname, ap)
-#         AP_list.append(ap)
-#     return np.mean(AP_list)
-
-
-def get_test_mAP(result_json_path, classname_list, label_json_path):
+def getTestmAP(result_json_path, classname_list, label_json_path):
     AP_list = []
     for classname in classname_list:
 
-        rec, prec, ap = voc_test(result_json_path, classname, label_json_path)
+        rec, prec, ap = vocTest(result_json_path, classname, label_json_path)
         print("AP %s: %f" % (classname,ap))
         AP_list.append(ap)
     return np.mean(AP_list)
@@ -204,7 +197,7 @@ def vocOnline(pres, labels, cate_id):
     # avoid divide by zero in case the first detection matches a difficult
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
-    ap = voc_ap(rec, prec)
+    ap = vocAP(rec, prec)
 
     return rec, prec, ap
 

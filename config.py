@@ -3,7 +3,7 @@
 cfg = {
     ### Global Set
     "model_name": "mobilenetv3",  
-    #mobilenetv3 adv-efficientnet-b2 se_resnext50_32x4d  xception resnext101_32x8d_wsl
+    #shufflenetv2 adv-efficientnet-b2 se_resnext50_32x4d  xception 
     'GPU_ID': '0',
     "class_number": 10,
 
@@ -20,19 +20,25 @@ cfg = {
     'label_path': '',# if 'DIR' quale  train_path
     'val_path':"./data/val",
     'pretrained':'', #path or ''
-    #pretrained/mobilenetv3_small_67.4.pth.tar
-    #pretrained/mobilenet_v2-b0353104.pth
-    #pretrained/se_resnext50_32x4d-a260b3a4.pth
-    'log_interval':10,  
-    'try_to_train_items': 200,   # 0 means all
+    #shufflenetv2_x1-5666bf0f80.pth
+    #efficientnet-b0-355c32eb
+    #efficientnet-b1-f1951068
+    #efficientnet-b2-8bb594d6
+    #efficientnet-b3-5fb5a3c3
+    #efficientnet-b4-6ed6700e
+    #efficientnet-b5-b6417697
+    #efficientnet-b6-c76e70fd
+    #efficientnet-b7-dcc49843
+
+    'try_to_train_items': 1000,   # 0 means all, or run part(200 e.g.) for bug test
     'save_best_only': True,  #only save model if better than before
     'save_one_only':True,    #only save one best model (will del model before)
     "save_dir": "output/",
-    'pin_memory': True,
     'metrics': ['acc'], # default is acc,  can add F1  ...
-    "loss": 'CE', # default or '' means CE, can other be Focalloss-1, BCE...
+    "loss": 'CE', # CE, CEV2-0.5, Focalloss-1, BCE...
 
     'show_heatmap':False,
+    'show_data':False,
 
 
     ### Train Hyperparameters
@@ -41,7 +47,7 @@ cfg = {
     'batch_size':64,
     'epochs':100,
     'optimizer':'SGD',  #Adam  SGD AdaBelief Ranger
-    'scheduler':'default-0.1-3', #default  SGDR-5-2  CVPR   step-4-0.8
+    'scheduler':'default-0.1-3', #default  SGDR-5-2    step-4-0.8
 
     'warmup_epoch':0, # 
     'weight_decay' : 0,#0.0001,
@@ -51,7 +57,7 @@ cfg = {
 
     'use_distill':0,
     'label_smooth':0,
-    'checkpoint':None,
+    # 'checkpoint':None,
     'class_weight': None,#s[1.4, 0.78], # None [1, 1]
     'clip_gradient': 0,#1,       # 0
     'freeze_nonlinear_epoch':0,
@@ -59,6 +65,7 @@ cfg = {
     'dropout':0.5, #before last_linear
 
     'mixup':False,
+    'cutmix':False,
     'sample_weights':None,
 
 
@@ -67,7 +74,9 @@ cfg = {
 
     'eval_path':"./data/test",#test with label,get test acc
     'test_path':"./data/test",#test without label, just show img result
-    'use_TTA':0,
+    
+    'TTA':False,
+    'merge':False,
     'test_batch_size': 1,
     
 

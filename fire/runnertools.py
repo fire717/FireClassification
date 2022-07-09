@@ -3,7 +3,8 @@ import time
 import torch
 import torch.optim as optim
 from fire.ranger import Ranger 
-from fire.loss import FocalLoss, CrossEntropyLoss
+from fire.loss import FocalLoss, CrossEntropyLoss,CrossEntropyLossV2
+
 
 def getSchedu(schedu, optimizer):
     if 'default' in schedu:
@@ -29,6 +30,7 @@ def getSchedu(schedu, optimizer):
         raise Exception("Unkown getSchedu: ", schedu)
     return scheduler
 
+
 def getOptimizer(optims, model, learning_rate, weight_decay):
     if optims=='Adam':
         optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -53,24 +55,22 @@ def getLossFunc(device, cfg):
     else:
         loss_weight = torch.DoubleTensor([1]*cfg['class_number']).to(device)
     
-
-
     if 'Focalloss' in cfg['loss']:
         gamma = float(cfg['loss'].strip().split('-')[1])
         loss_func = FocalLoss(label_smooth=cfg['label_smooth'],
                             gamma=gamma,
-                            weight=loss_weight,
-                            device=device).to(device)
+                            weight=loss_weight).to(device)
 
-
+    elif 'CEV2' in cfg['loss']:
+        gamma = float(cfg['loss'].strip().split('-')[1])
+        loss_func = CrossEntropyLossV2(label_smooth=cfg['label_smooth'],
+                            weight=loss_weight).to(device)
     else:
         # CE
         # loss_func = torch.nn.CrossEntropyLoss(weight=loss_weight).to(device)
         loss_func = CrossEntropyLoss(label_smooth=cfg['label_smooth'],
                             weight=loss_weight).to(device)
             #self.loss_func = CrossEntropyLossOneHot().to(self.device)
-
-
 
     return loss_func
 
