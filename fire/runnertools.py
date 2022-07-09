@@ -21,6 +21,10 @@ def getSchedu(schedu, optimizer):
         scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer,
                                                              T_0=T_0, 
                                                             T_mult=T_mult)
+    elif 'multi' in schedu:
+        milestones = [int(x) for x in schedu.strip().split('-')[1].split(',')]
+        gamma = float(schedu.strip().split('-')[2])
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones, gamma=gamma, last_epoch=-1)
     else:
         raise Exception("Unkown getSchedu: ", schedu)
     return scheduler
@@ -28,6 +32,8 @@ def getSchedu(schedu, optimizer):
 def getOptimizer(optims, model, learning_rate, weight_decay):
     if optims=='Adam':
         optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    elif optims=='AdamW':
+        optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     elif optims=='SGD':
         optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay)
     elif optims=='AdaBelief':
@@ -58,6 +64,7 @@ def getLossFunc(device, cfg):
 
 
     else:
+        # CE
         # loss_func = torch.nn.CrossEntropyLoss(weight=loss_weight).to(device)
         loss_func = CrossEntropyLoss(label_smooth=cfg['label_smooth'],
                             weight=loss_weight).to(device)
@@ -85,22 +92,3 @@ def clipGradient(optimizer, grad_clip=1):
                 param.grad.data.clamp_(-grad_clip, grad_clip)
 
 
-def writeLogs(cfg, 
-            best_epoch, 
-            early_stop_value,
-            log_time):
-    # 可以自定义要保存的字段
-    line_list= cfg['log_item']
-    log_path = os.path.join(cfg['save_dir'], 'history.csv')
-    if not os.path.exists(log_path):
-        with open(log_path, 'w', encoding='utf-8') as f:
-            line = ','.join(['timestamps']+line_list+['best_epoch','best_value'])+"\n"
-            f.write(line)
-
-    with open(log_path, 'a', encoding='utf-8') as f:
-
-        line_tmp = [log_time] + \
-                    ['-'.join([str(v) for v in cfg[x]]) if isinstance(cfg[x],list) else cfg[x] for x in line_list] + \
-                    [best_epoch, early_stop_value]
-        line = ','.join([str(x) for x in line_tmp])+"\n"
-        f.write(line)

@@ -2,7 +2,7 @@
 
 cfg = {
     ### Global Set
-    "model_name": "mobilenetv2",  
+    "model_name": "mobilenetv3",  
     #mobilenetv3 adv-efficientnet-b2 se_resnext50_32x4d  xception resnext101_32x8d_wsl
     'GPU_ID': '0',
     "class_number": 10,
@@ -24,13 +24,15 @@ cfg = {
     #pretrained/mobilenet_v2-b0353104.pth
     #pretrained/se_resnext50_32x4d-a260b3a4.pth
     'log_interval':10,  
-    'try_to_train_items': 0,   # 0 means all
+    'try_to_train_items': 200,   # 0 means all
     'save_best_only': True,  #only save model if better than before
     'save_one_only':True,    #only save one best model (will del model before)
     "save_dir": "output/",
     'pin_memory': True,
     'metrics': ['acc'], # default is acc,  can add F1  ...
     "loss": 'CE', # default or '' means CE, can other be Focalloss-1, BCE...
+
+    'show_heatmap':False,
 
 
     ### Train Hyperparameters
@@ -45,7 +47,7 @@ cfg = {
     'weight_decay' : 0,#0.0001,
     "k_flod":5,
     'start_fold':0,
-    'early_stop_patient':5,
+    'early_stop_patient':7,
 
     'use_distill':0,
     'label_smooth':0,
@@ -61,9 +63,7 @@ cfg = {
 
 
     ### Test
-    'show_heatmap':False,
-    
-    'model_path':'output/mobilenetv2_e9_0.93000.pth',#test model
+    'model_path':'output/mobilenetv3_e11_0.93300.pth',#test model
 
     'eval_path':"./data/test",#test with label,get test acc
     'test_path':"./data/test",#test without label, just show img result
@@ -71,23 +71,4 @@ cfg = {
     'test_batch_size': 1,
     
 
-    ### log
-    'comment':"",
-    'log_item':["model_name",
-                "img_size",
-                "learning_rate",
-                "batch_size",
-                "epochs",
-                "optimizer",
-                "scheduler",
-                "warmup_epoch",
-                "weight_decay",
-                "k_flod",
-                "start_fold",
-                'label_smooth',
-                'class_weight',
-                'clip_gradient',
-                'dropout',
-                'loss',
-                'comment'],
-    }
+}

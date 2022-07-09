@@ -11,7 +11,7 @@ from torch.utils.tensorboard import SummaryWriter
 import torch.nn.functional as F
 
 from fire.runnertools import getSchedu, getOptimizer, getLossFunc
-from fire.runnertools import clipGradient, writeLogs
+from fire.runnertools import clipGradient
 from fire.metrics import getF1
 from fire.scheduler import GradualWarmupScheduler
 from fire.utils import printDash
@@ -98,7 +98,7 @@ class FireRunner():
         self.model = model.to(self.device)
 
 
-
+        self.scaler = torch.cuda.amp.GradScaler()
         ############################################################
         
 
@@ -379,7 +379,8 @@ class FireRunner():
             for (data, target, img_names) in data_loader:
                 data, target = data.to(self.device), target.to(self.device)
                 #print(target.shape)
-                output = self.model(data).double()
+                with torch.cuda.amp.autocast():
+                    output = self.model(data).double()
 
                 # print(img_names)
                 # print(output)
@@ -429,9 +430,6 @@ class FireRunner():
 
         # log
         self.log_time = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime(time.time()))
-        self.writer_train = SummaryWriter(os.path.join(self.cfg['save_dir'],'logs',self.log_time,'train'))
-        self.writer_val = SummaryWriter(os.path.join(self.cfg['save_dir'],'logs',self.log_time,'val'))
-
 
 
     def onTrainStep(self,train_loader, epoch):
@@ -446,60 +444,14 @@ class FireRunner():
             one_batch_time_start = time.time()
 
             target = target.to(self.device)
-            #print(len(target.shape))
-            #print(img_names)
-            if self.cfg['mixup']:
-                alpha = self.cfg['mixup']
-                lam = np.random.beta(alpha,alpha)
-                # print(lam)
-                index = torch.randperm(data.size(0)).to(self.device)
-                #打乱顺序作为融合的另一批样本
-                # print(index)
-                data = lam*data + (1-lam)*data[index,:]
-                targets_a, targets_b = target, target[index]
-                data = data.to(self.device)
-                output = self.model(data).double()
-                targets_a, targets_b = targets_a.to(self.device), targets_b.to(self.device)
-                # print(target)
-                # print(targets_a)
-                # print(targets_b)
-                # b
-                loss = lam * self.loss_func(output, targets_a) + (1 - lam) * self.loss_func(output, targets_b)
-            
-            # if self.cfg['mixup']:
-            #     alpha = self.cfg['mixup']
-            #     lam = np.random.beta(alpha,alpha)
-            #     # print(lam)
-            #     index = torch.randperm(data.size(0)).to(self.device)
-            #     #打乱顺序作为融合的另一批样本
-            #     # print(index)
-            #     data = lam*data + (1-lam)*data[index,:]
-            #     data = data.to(self.device)
-            #     output = self.model(data).double()
 
-            #     targets_a, targets_b = target, target[index]
-            #     targets_a, targets_b = targets_a.to(self.device), targets_b.to(self.device)
-            #     # print(targets_a)
-            #     # print(targets_b)
-            #     one_hot_targets_a = F.one_hot(targets_a, output.shape[1])
-            #     one_hot_targets_b = F.one_hot(targets_b, output.shape[1])
-            #     # print(one_hot_targets_a)
-            #     # print(one_hot_targets_b)
-            #     target = lam*one_hot_targets_a + (1 - lam) * one_hot_targets_b
-            #     # print(target)
-            #     # print(target.shape[1])
-            #     # b
-            #     loss = self.loss_func(output, target)
+            data = data.to(self.device)
 
-                #loss = lam * self.loss_func(output, targets_a) + (1 - lam) * self.loss_func(output, targets_b)
-
-
-            else:
-                data = data.to(self.device)
-                output = self.model(data).double()
+            with torch.cuda.amp.autocast():
+                output = self.model(data)
                 #all_linear2_params = torch.cat([x.view(-1) for x in model.model_feature._fc.parameters()])
                 #l2_regularization = 0.0003 * torch.norm(all_linear2_params, 2)
-                loss = self.loss_func(output, target, self.cfg['sample_weights'],sample_weight_img_names=img_names)# + l2_regularization.item()    
+                loss = self.loss_func(output[0], target, self.cfg['sample_weights'],sample_weight_img_names=img_names)# + l2_regularization.item()    
 
 
             total_loss += loss.item()
@@ -509,12 +461,15 @@ class FireRunner():
 
             
             self.optimizer.zero_grad()#把梯度置零
-            loss.backward() #计算梯度
-            self.optimizer.step() #更新参数
+            # loss.backward() #计算梯度
+            # self.optimizer.step() #更新参数
+            self.scaler.scale(loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
 
             ### train acc
-            pred_score = nn.Softmax(dim=1)(output)
-            pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+            pred_score = nn.Softmax(dim=1)(output[0])
+            pred = output[0].max(1, keepdim=True)[1] # get the index of the max log-probability
             if len(target.shape)>1:
                 target = target.max(1, keepdim=True)[1] 
             correct += pred.eq(target.view_as(pred)).sum().item()
@@ -542,17 +497,9 @@ class FireRunner():
                     self.optimizer.param_groups[0]["lr"]), 
                     end="",flush=True)
 
-        self.writer_train.add_scalar('acc', train_acc, global_step=epoch)
-        self.writer_train.add_scalar('loss', train_loss, global_step=epoch)
-        self.writer_train.add_scalar('LR', self.optimizer.param_groups[0]["lr"], global_step=epoch)
 
 
     def onTrainEnd(self):
-
-        writeLogs(self.cfg,self.best_epoch,self.early_stop_value,self.log_time)
-
-        self.writer_train.close()
-        self.writer_val.close()
 
         del self.model
         gc.collect()
@@ -577,15 +524,14 @@ class FireRunner():
             for (data, target, img_names) in val_loader:
                 data, target = data.to(self.device), target.to(self.device)
 
-                output = self.model(data).double()
-
-
-                self.val_loss += self.loss_func(output, target).item() # sum up batch loss
+                with torch.cuda.amp.autocast():
+                    output = self.model(data)
+                    self.val_loss += self.loss_func(output[0], target).item() # sum up batch loss
 
                 #print(output.shape)
-                pred_score = nn.Softmax(dim=1)(output)
+                pred_score = nn.Softmax(dim=1)(output[0])
                 #print(pred_score.shape)
-                pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
+                pred = output[0].max(1, keepdim=True)[1] # get the index of the max log-probability
                 if self.cfg['use_distill']:
                     target = target.max(1, keepdim=True)[1] 
                 self.correct += pred.eq(target.view_as(pred)).sum().item()
@@ -609,19 +555,12 @@ class FireRunner():
             precision, recall, f1_score = getF1(pres, labels)
             print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}%, precision: {:.5f}, recall: {:.5f}, f1_score: {:.5f}\n'.format(
                 self.val_loss, 100. * self.val_acc, precision, recall, f1_score))
-            self.writer_val.add_scalar('precision', precision, global_step=epoch)
-            self.writer_val.add_scalar('recall', recall, global_step=epoch)
-            self.writer_val.add_scalar('f1_score', f1_score, global_step=epoch)
+
 
         else:
             print(' \n           [VAL] loss: {:.5f}, acc: {:.3f}% \n'.format(
                 self.val_loss, 100. * self.val_acc))
 
-        self.writer_val.add_scalar('acc', self.val_acc, global_step=epoch)
-        self.writer_val.add_scalar('loss', self.val_loss, global_step=epoch)
-
-
-        
 
         if self.cfg['warmup_epoch']:
             self.scheduler.step(epoch)

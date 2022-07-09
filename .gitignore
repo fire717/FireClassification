@@ -9,9 +9,7 @@ __pycache__
 *.pth
 
 /fire/__pycache__
-/config.py
 /data
 /pretrained
 /output
 
-/fire/dataaug_user.py
