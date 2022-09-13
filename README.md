@@ -10,22 +10,24 @@ Read the source code as documentation.
 ## 二、使用
 
 ### 2.1 训练
-1. 下载[fashion mnist](https://github.com/zalandoresearch/fashion-mnist)放到data目录下，运行make_fashionmnist.py自动提取图片并划分类别、验证集
-2. 拷贝 fire/examples/config.py.example到根目录并去掉后缀.example，然后根据需要修改相应参数、配置
-3. 拷贝 fire/examples/dataaug_user.py.example到fire目录并去掉后缀.example，然后根据需要修改相应数据增强（默认无增强）
-4. 执行python train.py 训练
-5. 执行python evaluate.py 测试（在config设置模型路径）
+1. 下载[fashion mnist](https://github.com/zalandoresearch/fashion-mnist)数据集的四个压缩包放到data目录下，运行`python scripts/make_fashionmnist.py`自动提取图片并划分类别、验证集
+2. 执行python train.py 训练
+3. 执行python evaluate.py 测试（在config设置训练好的模型路径）
 
-### 2.2 自定义网络结构
+### 2.2 优化
+* 迁移学习，下载对应模型的预训练模型，把路径填入config.py中
+* 调整不同的模型、尺寸、优化器等等
+
+### 2.3 自定义网络结构
 依次修改fire/model.py相应代码即可。
 
 ## 三、功能
-### 0.数据加载
+### 3.1.数据加载
 * 文件夹形式
 * csv标签形式
 * 其它自定义形式需手动修改代码
 
-### 1.支持网络
+### 3.2.支持网络
 
 * Resnet系列，Densenet系列，VGGnet系列等所有[pretrained-models.pytorch](https://github.com/Cadene/pretrained-models.pytorch)支持的网络
 * [Mobilenetv2](https://pytorch.org/docs/stable/torchvision/models.html?highlight=mobilenet#torchvision.models.mobilenet_v2)，[Mbilenetv3](https://github.com/kuan-wang/pytorch-mobilenet-v3)，ShuffleNetV2，[MicroNet](https://github.com/liyunsheng13/micronet)
@@ -35,24 +37,24 @@ Read the source code as documentation.
 
 
 
-### 2.优化器
+### 3.3.优化器
 * Adam  
 * SGD 
 * AdaBelief 
 * [Ranger](https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer)
 * AdamW
 
-### 3.学习率衰减
+### 3.4.学习率衰减
 * ReduceLROnPlateau
 * StepLR
 * MultiStepLR
 * SGDR
 
-### 4.损失函数
+### 3.5.损失函数
 * 交叉熵
 * Focalloss
 
-### 5.其他
+### 3.6.其他
 * Metric(acc, F1)
 * 训练日志保存
 * 交叉验证
