@@ -52,7 +52,7 @@ class CrossEntropyLossV2(nn.Module):
 
         loss = torch.mean(torch.sum(loss, -1))
 
-        return 
+        return loss
 
 
 class CrossEntropyLoss(nn.Module):
