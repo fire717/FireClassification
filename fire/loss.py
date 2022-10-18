@@ -20,9 +20,9 @@ class CrossEntropyLossOneHot(nn.Module):
 
 
 class CrossEntropyLossV2(nn.Module):
-    def __init__(self, label_smooth=0, weight=None):
+    def __init__(self, label_smooth=0, class_weight=None):
         super().__init__()
-        self.weight = weight 
+        self.class_weight = class_weight 
         self.label_smooth = label_smooth
         self.epsilon = 1e-7
         
@@ -43,8 +43,8 @@ class CrossEntropyLossV2(nn.Module):
         # original CE loss
         loss = -one_hot_label * y_softmaxlog
 
-        if sample_weights:
-            loss = loss*torch.Tensor(sample_weights).to(loss.device)
+        if class_weight:
+            loss = loss*class_weight
 
         #focal loss gamma
         if gamma:
@@ -56,9 +56,9 @@ class CrossEntropyLossV2(nn.Module):
 
 
 class CrossEntropyLoss(nn.Module):
-    def __init__(self, label_smooth=0, weight=None):
+    def __init__(self, label_smooth=0, class_weight=None):
         super().__init__()
-        self.weight = weight 
+        self.class_weight = class_weight 
         self.label_smooth = label_smooth
         self.epsilon = 1e-7
         
@@ -79,6 +79,9 @@ class CrossEntropyLoss(nn.Module):
         # original CE loss
         loss = -one_hot_label * y_softmaxlog
 
+        if class_weight:
+            loss = loss*class_weight
+            
         loss = torch.mean(torch.sum(loss, -1))
         return loss
 

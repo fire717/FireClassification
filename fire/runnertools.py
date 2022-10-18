@@ -51,25 +51,25 @@ def getLossFunc(device, cfg):
     # loss
 
     if cfg['class_weight']:
-        loss_weight = torch.DoubleTensor(cfg['class_weight']).to(device)
+        class_weight = torch.DoubleTensor(cfg['class_weight']).to(device)
     else:
-        loss_weight = torch.DoubleTensor([1]*cfg['class_number']).to(device)
+        class_weight = None
     
     if 'Focalloss' in cfg['loss']:
         gamma = float(cfg['loss'].strip().split('-')[1])
         loss_func = FocalLoss(label_smooth=cfg['label_smooth'],
                             gamma=gamma,
-                            weight=loss_weight).to(device)
+                            class_weight=class_weight).to(device)
 
     elif 'CEV2' in cfg['loss']:
         gamma = float(cfg['loss'].strip().split('-')[1])
         loss_func = CrossEntropyLossV2(label_smooth=cfg['label_smooth'],
-                            weight=loss_weight).to(device)
+                            class_weight=class_weight).to(device)
     else:
-        # CE
-        # loss_func = torch.nn.CrossEntropyLoss(weight=loss_weight).to(device)
+        ### origin CE
+        # loss_func = torch.nn.CrossEntropyLoss(weight=class_weight).to(device)
         loss_func = CrossEntropyLoss(label_smooth=cfg['label_smooth'],
-                            weight=loss_weight).to(device)
+                            class_weight=class_weight).to(device)
             #self.loss_func = CrossEntropyLossOneHot().to(self.device)
 
     return loss_func
