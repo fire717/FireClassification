@@ -44,7 +44,7 @@ class CrossEntropyLossV2(nn.Module):
         loss = -one_hot_label * y_softmaxlog
 
         if class_weight:
-            loss = loss*class_weight
+            loss = loss*self.class_weight
 
         #focal loss gamma
         if gamma:
@@ -80,8 +80,8 @@ class CrossEntropyLoss(nn.Module):
         loss = -one_hot_label * y_softmaxlog
 
         if class_weight:
-            loss = loss*class_weight
-            
+            loss = loss*self.class_weight
+
         loss = torch.mean(torch.sum(loss, -1))
         return loss
 
