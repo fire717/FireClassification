@@ -167,7 +167,7 @@ class FireModel(nn.Module):
             self.features = self.pretrain_model.features
 
             self.head1 = nn.Sequential(
-                nn.Dropout(p=self.cfg['dropout']),    # refer to paper section 6
+                nn.Dropout(p=0.2),    # refer to paper section 6
                 nn.Linear(in_features, self.cfg['class_number']),
             )
 
