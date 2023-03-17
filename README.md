@@ -34,6 +34,7 @@ Read the source code as documentation.
 * [EfficientNet](https://github.com/lukemelas/EfficientNet-PyTorch)
 * [Swin Transformer](https://github.com/microsoft/Swin-Transformer)
 * [ConvNeXt](https://github.com/facebookresearch/ConvNeXt)
+* [TIMM](https://github.com/huggingface/pytorch-image-models)
 
 
 
