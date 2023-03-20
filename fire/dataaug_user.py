@@ -47,12 +47,20 @@ class TrainDataAug:
         # img = A.HorizontalFlip(p=0.5)(image=img)['image'] 
         # img = A.VerticalFlip(p=0.4)(image=img)['image'] 
         
-        # img = A.OneOf([A.RandomBrightness(limit=0.1, p=1), 
-        #             A.RandomContrast(limit=0.1, p=1),
-        #             A.RandomGamma(gamma_limit=(50, 150),p=1),
-        #             A.HueSaturationValue(hue_shift_limit=10, 
-        #                 sat_shift_limit=10, val_shift_limit=10,  p=1)], 
-        #             p=0.6)(image=img)['image']
+        # # img = A.OneOf([A.RandomBrightnessContrast(brightness_limit=0.05, 
+        # #                                        contrast_limit=0.05, p=0.5), 
+        # #                 A.HueSaturationValue(hue_shift_limit=10, 
+        # #                     sat_shift_limit=10, val_shift_limit=10,  p=0.5)], 
+        # #                 p=0.4)(image=img)['image']
+
+
+        # # img = A.GaussNoise(var_limit=(5.0, 10.0), mean=0, p=0.2)(image=img)['image']
+
+
+        # img = A.RGBShift(r_shift_limit=5,
+        #                     g_shift_limit=5,
+        #                     b_shift_limit=5,
+        #                     p=0.5)(image=img)['image']
 
         
         # img = A.Resize(self.h,self.w,cv2.INTER_LANCZOS4,p=1)(image=img)['image']
