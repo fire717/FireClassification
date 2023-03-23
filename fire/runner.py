@@ -527,7 +527,10 @@ class FireRunner():
 
 
     def onTrainEnd(self):
-
+        save_name = 'last_g%.5f.pth' % (self.cfg['GPU_ID'])
+        self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
+        self.modelSave(self.last_save_path)
+        
         del self.model
         gc.collect()
         torch.cuda.empty_cache()
