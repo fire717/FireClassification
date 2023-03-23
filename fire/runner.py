@@ -527,7 +527,7 @@ class FireRunner():
 
 
     def onTrainEnd(self):
-        save_name = 'last_g%.5f.pth' % (self.cfg['GPU_ID'])
+        save_name = 'last_g%s.pth' % (self.cfg['GPU_ID'])
         self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
         self.modelSave(self.last_save_path)
         
