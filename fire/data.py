@@ -40,6 +40,7 @@ class FireData():
             for i,class_name in enumerate(class_names):
                 sub_dir = os.path.join(self.cfg['val_path'],class_name)
                 img_path_list = getFileNames(sub_dir)
+                img_path_list.sort()
                 val_data += [[p,i] for p in img_path_list]
 
         else:
@@ -60,6 +61,7 @@ class FireData():
 
         firelog('i',"Train: %d Val: %d " % (len(train_data),len(val_data)))
         input_data = [train_data, val_data]
+
         train_loader, val_loader = getDataLoader("trainval", 
                                                 input_data,
                                                 self.cfg)

@@ -32,7 +32,7 @@ Read the source code as documentation.
 ### 3.2.支持网络
 
 * Resnet系列，Densenet系列，VGGnet系列等所有[pretrained-models.pytorch](https://github.com/Cadene/pretrained-models.pytorch)支持的网络
-* [Mobilenetv2](https://pytorch.org/docs/stable/torchvision/models.html?highlight=mobilenet#torchvision.models.mobilenet_v2)，[Mbilenetv3](https://github.com/kuan-wang/pytorch-mobilenet-v3)，ShuffleNetV2，[MicroNet](https://github.com/liyunsheng13/micronet)
+* [Mobilenetv2](https://pytorch.org/docs/stable/torchvision/models.html?highlight=mobilenet#torchvision.models.mobilenet_v2)，[Mbilenetv3](https://github.com/kuan-wang/pytorch-mobilenet-v3)，ShuffleNetV2
 * [EfficientNet](https://github.com/lukemelas/EfficientNet-PyTorch)
 * [Swin Transformer](https://github.com/microsoft/Swin-Transformer)
 * [ConvNeXt](https://github.com/facebookresearch/ConvNeXt)

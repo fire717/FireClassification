@@ -4,7 +4,6 @@ import torch.nn as nn
 import pretrainedmodels
 
 from fire.models.mobilenetv3 import MobileNetV3
-from fire.models.micronet import MicroNet
 
 from fire.models.myefficientnet_pytorch import EfficientNet
 from fire.models.convnext import convnext_tiny,convnext_small,convnext_base,convnext_large
@@ -52,15 +51,6 @@ class FireModel(nn.Module):
             self.pretrain_model = torchvision.models.shufflenet_v2_x1_0()
             if self.cfg['pretrained']:
                 self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True)
-
-
-        elif "micronet" in self.cfg['model_name']:
-            #model.cpu()
-            m = self.cfg['model_name'].strip().split('-')[-1]
-            self.pretrain_model = MicroNet(self.cfg['class_number'],m)
-            if self.cfg['pretrained']:
-                state_dict = torch.load(self.cfg['pretrained'])
-                self.pretrain_model.load_state_dict(state_dict, strict=True)
 
 
         elif "efficientnet" in self.cfg['model_name']:
@@ -198,9 +188,6 @@ class FireModel(nn.Module):
             self.avgpool = nn.AdaptiveAvgPool2d(1)
             self.head1 = nn.Linear(num_features,self.cfg['class_number'])
 
-        elif "micronet" in self.cfg['model_name']:
-            self.features = self.pretrain_model
-
 
         elif "efficientnet" in self.cfg['model_name']:
             #self.pretrain_model._dropout = nn.Dropout(0.5)
@@ -280,10 +267,6 @@ class FireModel(nn.Module):
 
             out = [out1]
 
-
-        elif "micronet" in self.cfg['model_name']:
-            out = self.features(img)
-            out = [out1]
 
         elif "efficientnet" in self.cfg['model_name']:
             out = self.backbone(img)

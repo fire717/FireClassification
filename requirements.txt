@@ -1,9 +1,10 @@
-json
 numpy
 pandas
 opencv-python
 torch
-torchvisson
+torchvision
 scikit-learn
 pretrainedmodels
 albumentations
+timm
+yacs

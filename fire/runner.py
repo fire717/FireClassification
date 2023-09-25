@@ -7,7 +7,6 @@ import torch.nn as nn
 import numpy as np
 import cv2
 
-from torch.utils.tensorboard import SummaryWriter
 import torch.nn.functional as F
 
 from fire.runnertools import getSchedu, getOptimizer, getLossFunc
