@@ -2,11 +2,11 @@
 import os
 import random
 import numpy as np
-from sklearn.model_selection import KFold
 
 import cv2
 from torchvision import transforms
 
+from fire.utils import firelog
 from fire.datatools import getDataLoader, getFileNames
 from fire.dataaug_user import TrainDataAug
 
@@ -14,47 +14,51 @@ from fire.dataaug_user import TrainDataAug
 
 class FireData():
     def __init__(self, cfg):
-        
         self.cfg = cfg
 
 
     def getTrainValDataloader(self):
 
-        if self.cfg['val_path'] != '':
-            print("[INFO] val_path is not none, not use kflod to split train-val data ...")
-            train_data = getFileNames(self.cfg['train_path'])
-            train_data.sort(key = lambda x:os.path.basename(x))
-            train_data = np.array(train_data)
-            random.shuffle(train_data)
+        class_names = self.cfg['class_names']
+        if len(class_names)==0:
+            class_names = os.listdir(self.cfg['train_path'])
+            class_names.sort()
+        firelog("i", class_names)
 
-            val_data = getFileNames(self.cfg['val_path'])
-            if self.cfg['try_to_train_items'] > 0:
-                train_data = train_data[:self.cfg['try_to_train_items']]
-                val_data = val_data[:self.cfg['try_to_train_items']]
+        train_data = []
+        for i,class_name in enumerate(class_names):
+            sub_dir = os.path.join(self.cfg['train_path'],class_name)
+            img_path_list = getFileNames(sub_dir)
+            img_path_list.sort()
+            train_data += [[p,i] for p in img_path_list]
+        random.shuffle(train_data)
+
+        if self.cfg['val_path'] != '':
+            firelog('i',"val_path is not none, not use kflod to split train-val data ...")
+            
+            val_data = []
+            for i,class_name in enumerate(class_names):
+                sub_dir = os.path.join(self.cfg['val_path'],class_name)
+                img_path_list = getFileNames(sub_dir)
+                val_data += [[p,i] for p in img_path_list]
 
         else:
-            print("[INFO] val_path is none, use kflod to split data: k=%d start_fold=%d" % (self.cfg['k_flod'],self.cfg['start_fold']))
-            data_names = getFileNames(self.cfg['train_path'])
-            print("[INFO] Total images: ", len(data_names))
+            firelog('i',"val_path is none, use kflod to split data: k=%d start_fold=%d" % (self.cfg['k_flod'],self.cfg['start_fold']))
+            all_data = train_data
 
-            data_names.sort(key = lambda x:os.path.basename(x))
-            data_names = np.array(data_names)
-            random.shuffle(data_names)
+            fold_count = int(len(all_data)/self.cfg['k_flod'])
+            if self.cfg['val_fold']==self.cfg['k_flod']:
+                train_data = all_data
+                val_data = all_data[:10]
+            else:
+                val_data = all_data[fold_count*self.cfg['val_fold']:fold_count*(self.cfg['val_fold']+1)]
+                train_data = all_data[:fold_count*self.cfg['val_fold']]+all_data[fold_count*(self.cfg['val_fold']+1):]
 
-            if self.cfg['try_to_train_items'] > 0:
-                data_names = data_names[:self.cfg['try_to_train_items']]
+        if self.cfg['try_to_train_items'] > 0:
+            train_data = train_data[:self.cfg['try_to_train_items']]
+            val_data = val_data[:self.cfg['try_to_train_items']]
 
-            folds = KFold(n_splits=self.cfg['k_flod'], shuffle=False)
-            data_iter = folds.split(data_names)
-            for fid in range(self.cfg['k_flod']):
-                train_index, val_index = next(data_iter)
-                if fid == self.cfg['start_fold']:
-                    break
-
-            train_data = data_names[train_index]
-            val_data = data_names[val_index]
-
-
+        firelog('i',"Train: %d Val: %d " % (len(train_data),len(val_data)))
         input_data = [train_data, val_data]
         train_loader, val_loader = getDataLoader("trainval", 
                                                 input_data,
@@ -62,29 +66,9 @@ class FireData():
         return train_loader, val_loader
 
 
-    def getTrainDataloader(self):
-        data_names = getFileNames(self.cfg['train_path'])
-        print("[INFO] Total images: ", len(data_names))
-
-        input_data = [data_names]
-        data_loader = getDataLoader("train", 
-                                        input_data,
-                                        self.cfg)
-        return data_loader
-
-    def getValDataloader(self):
-        data_names = getFileNames(self.cfg['val_path'])
-        print("[INFO] Total images: ", len(data_names))
-
-        input_data = [data_names]
-        data_loader = getDataLoader("val", 
-                                        input_data,
-                                        self.cfg)
-        return data_loader
-
     def getEvalDataloader(self):
         data_names = getFileNames(self.cfg['eval_path'])
-        print("[INFO] Total images: ", len(data_names))
+        firelog('i',"Total images: "+str(len(data_names)))
 
         input_data = [data_names]
         data_loader = getDataLoader("eval", 
@@ -106,7 +90,7 @@ class FireData():
 
         show_dir = "show_img"
         show_path = os.path.join(self.cfg['save_dir'], show_dir)
-        print("[INFO] Showing traing data in ",show_path)
+        firelog('i',"Showing traing data in ",show_path)
         if not os.path.exists(show_path):
             os.makedirs(show_path)
 

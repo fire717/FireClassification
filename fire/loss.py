@@ -56,10 +56,11 @@ class CrossEntropyLossV2(nn.Module):
 
 
 class CrossEntropyLoss(nn.Module):
-    def __init__(self, label_smooth=0, class_weight=None):
+    def __init__(self, label_smooth=0, class_weight=None, gamma=0):
         super().__init__()
-        self.class_weight = class_weight 
+        self.class_weight = class_weight #means alpha
         self.label_smooth = label_smooth
+        self.gamma = gamma
         self.epsilon = 1e-7
         
     def forward(self, x, y, sample_weights=0, sample_weight_img_names=None):
@@ -79,8 +80,11 @@ class CrossEntropyLoss(nn.Module):
         # original CE loss
         loss = -one_hot_label * y_softmaxlog
 
-        if class_weight:
+        if self.class_weight:
             loss = loss*self.class_weight
+
+        if self.gamma:
+            loss = loss*((1-y_softmax)**self.gamma)
 
         loss = torch.mean(torch.sum(loss, -1))
         return loss

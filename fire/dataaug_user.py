@@ -75,7 +75,7 @@ class TrainDataAug:
 
 
         
-        img = Image.fromarray(img)
+        #img = Image.fromarray(img)
         return img
 
 
@@ -92,7 +92,7 @@ class TestDataAug:
 
 
         # img = A.Resize(self.h,self.w,cv2.INTER_LANCZOS4,p=1)(image=img)['image']
-        img = Image.fromarray(img)
+        #img = Image.fromarray(img)
         return img
 
 

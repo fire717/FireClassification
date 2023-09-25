@@ -1,16 +1,18 @@
-# Fire: Deep Learning for lazy humans
+# FireClassification: Deep Learning Image Classification for lazy humans
 
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/fire717/Fire/blob/main/LICENSE)
 
 ## 一、前言
-Fire is a deep learning Framework written in Python and used for Image Classification task, running on top of the machine learning platform Pytorch.
+FireClassification is a deep learning Framework written in Python and used for Image Classification task, running on top of the machine learning platform Pytorch.
 
 Read the source code as documentation.
 
-## 二、使用
+## 二、使用示例
+
+首先git clone本项目
 
 ### 2.1 训练
-1. 下载[fashion mnist](https://github.com/zalandoresearch/fashion-mnist)数据集的四个压缩包放到data目录下，运行`python scripts/make_fashionmnist.py`自动提取图片并划分类别、验证集
+1. 下载[fashion mnist](https://github.com/zalandoresearch/fashion-mnist)数据集的四个压缩包放到./data目录下，运行`python scripts/make_fashionmnist.py`自动提取图片并划分类别、验证集
 2. 执行python train.py 训练
 3. 执行python evaluate.py 测试（在config设置训练好的模型路径）
 
@@ -34,7 +36,7 @@ Read the source code as documentation.
 * [EfficientNet](https://github.com/lukemelas/EfficientNet-PyTorch)
 * [Swin Transformer](https://github.com/microsoft/Swin-Transformer)
 * [ConvNeXt](https://github.com/facebookresearch/ConvNeXt)
-* [TIMM](https://github.com/huggingface/pytorch-image-models)
+* [TIMM库所有模型](https://github.com/huggingface/pytorch-image-models)
 
 
 
@@ -42,7 +44,6 @@ Read the source code as documentation.
 * Adam  
 * SGD 
 * AdaBelief 
-* [Ranger](https://github.com/lessw2020/Ranger-Deep-Learning-Optimizer)
 * AdamW
 
 ### 3.4.学习率衰减
@@ -69,6 +70,7 @@ Read the source code as documentation.
  
 
 ## 四、Update
+* 2023.9 [v1.1] 优化代码，删掉一些不用的功能，替换一些依赖库为自己实现，修复bug简化代码,修改存储路径
 * 2022.7 [v1.0] (根据这半年打比赛经验，增加一些东西，删除一些几乎不用的东西。) 增加convnext、swin transformer、半精度训练，删除mobileformer，删除日志、tensorboard（习惯用文档记录），优化readme
 * 2021.8 [v0.9] 增加micronet和测试结果，增加rk3399测速
 * 2021.8 [v0.8] 增加mobileformer，加入fashion mnist数据集使用demo，方便测试各种模型，同时加入部分网络的训练结果
@@ -77,10 +79,6 @@ Read the source code as documentation.
 * 完善Readme
 * 增加使用文档
 * 彻底分离用户自定义部分的代码
-* 特征图热力图可视化(grad-cam)
-* Dynamtic ReLU 
 
 ## 六、参考资源
 1. [albumentations](https://github.com/albumentations-team/albumentations)
-2. [warmup](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
-3. [pytorch-grad-cam](https://github.com/jacobgil/pytorch-grad-cam)

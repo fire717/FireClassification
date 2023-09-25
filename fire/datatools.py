@@ -13,7 +13,7 @@ import albumentations as A
 import json
 import platform
 
-
+from fire.utils import firelog
 from fire.dataaug_user import TrainDataAug, TestDataAug
 
 
@@ -32,107 +32,54 @@ def getFileNames(file_dir, tail_list=['.png','.jpg','.JPG','.PNG']):
 ######## dataloader
 
 class TensorDatasetTrainClassify(Dataset):
-    _print_times = 0
-    def __init__(self, train_jpg, label_type, label_path, log_classname=True, transform=None):
-        self.train_jpg = train_jpg
-        self.label_type = label_type
-        self.label_path = label_path
+    def __init__(self, data, cfg, transform=None):
+        self.data = data
+        self.cfg = cfg
         self.transform = transform
-        self.log_classname = log_classname
-
-        self.label_dict = {}
-        self.getLabels()
-        self.cate_dirs = []
-
-    def getLabels(self):
-
-        if self.label_type == "DIR":
-            self.cate_dirs = os.listdir(self.label_path)
-            self.cate_dirs.sort()
-            if TensorDatasetTrainClassify._print_times==0:
-                if self.log_classname:
-                    print("[INFO] Default classes names: ", self.cate_dirs)
-                    TensorDatasetTrainClassify._print_times=1
-            
-            for i, img_path in enumerate(self.train_jpg):
-                img_dirs = img_path.replace(self.label_path,'')
-                img_dirs = img_dirs.split(os.sep)[:2]
-                img_dir = img_dirs[0] if img_dirs[0] else img_dirs[1]
-
-                y = self.cate_dirs.index(img_dir)
-                self.label_dict[img_path] = y
-
-        # User code here
-        elif self.label_type == "CSV":
-            df = pd.read_csv(self.label_path)
-            dir_path = os.path.dirname(self.train_jpg[0])
-            for index, row in df.iterrows():
-                #print(row["image_id"], type(row["label"]))
-                img_path = os.path.join(dir_path, row["image_id"])
-                img_path = img_path.replace("\\","/")
-                # print(img_path)
-                # b
-                self.label_dict[img_path] = row["label"]
-                #b
-            if TensorDatasetTrainClassify._print_times==0:
-                print("[INFO] Labels count: ")
-                print(df['label'].value_counts().sort_index())
-                TensorDatasetTrainClassify._print_times=1
-
-        else:
-            raise Exception("[ERROR] In datatools.py getLabel() reimplement needed. ")
-        
 
 
     def __getitem__(self, index):
 
-        #img = Image.open(self.train_jpg[index]).convert('RGB')
-        img = cv2.imread(self.train_jpg[index])
+        img = cv2.imread(self.data[index][0])
 
         if self.transform is not None:
             img = self.transform(img)
-
-        y = self.label_dict[self.train_jpg[index]]
+        
+        y = self.data[index][1]
 
         # y_onehot = [0,0]
         # y_onehot[y] = 1
 
-        return img, y, self.train_jpg[index]
+        return img, y, self.data[index]
         
     def __len__(self):
-        return len(self.train_jpg)
+        return len(self.data)
 
 
 class TensorDatasetTestClassify(Dataset):
 
-    def __init__(self, train_jpg, transform=None):
-        self.train_jpg = train_jpg
-        if transform is not None:
-            self.transform = transform
-        else:
-            self.transform = None
+    def __init__(self, data, cfg, transform=None):
+        self.data = data
+        self.cfg = cfg
+        elf.transform = transform
 
     def __getitem__(self, index):
-        # img = cv2.imread(self.train_jpg[index])
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        #img = cv2.resize(img,(180, 180))
 
-        #img = Image.open(self.train_jpg[index]).convert('RGB')
-        img = cv2.imread(self.train_jpg[index])
+        img = cv2.imread(self.data[index])
         #img = imgPaddingWrap(img)
         #b
         if self.transform is not None:
             img = self.transform(img)
 
-        # path_dir = '/'.join(self.train_jpg[index].split('/')[:-1])
+        # path_dir = '/'.join(self.data[index].split('/')[:-1])
         # y = 0
         # if  'true' in path_dir:
         #     y = 1
 
-        return img, self.train_jpg[index]
+        return img, self.data[index]
 
     def __len__(self):
-        return len(self.train_jpg)
+        return len(self.data)
 
 
 ###### 3. get data loader 
@@ -151,7 +98,7 @@ def getNormorlize(model_name):
     elif "EN-B" in model_name:
         my_normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     else:
-        print("[Info] Not set normalize type! Use defalut imagenet normalization.")
+        firelog("i","Not set normalize type, Use defalut imagenet normalization.")
         my_normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     return my_normalize
 
@@ -166,30 +113,7 @@ def getDataLoader(mode, input_data, cfg):
     data_aug_test = TestDataAug(cfg['img_size'])
 
 
-    if mode=="trainval_onehot":
-        my_dataloader = TensorDatasetTrainClassify
-        
-        train_loader = torch.utils.data.DataLoader(
-                    my_dataloader(input_data[0],
-                                transforms.Compose([
-                                    data_aug_train,
-                                    transforms.ToTensor(),
-                                    my_normalize,
-                                ])),
-                        batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
-
-        val_loader = torch.utils.data.DataLoader(
-                    my_dataloader(input_data[1],
-                                    transforms.Compose([
-                                    data_aug_test,
-                                    transforms.ToTensor(),
-                                    my_normalize
-                                ])),
-                        batch_size=1, shuffle=False, num_workers=cfg['num_workers'], pin_memory=True)
-        return train_loader, val_loader
-
-
-    elif mode=="test":
+    if mode=="test":
         my_dataloader = TensorDatasetTestClassify
 
         test_loader = torch.utils.data.DataLoader(
@@ -209,19 +133,9 @@ def getDataLoader(mode, input_data, cfg):
     elif mode=="trainval":
         my_dataloader = TensorDatasetTrainClassify
         
-        #auto aug
-
-        #from .autoaugment import ImageNetPolicy
-        # from libs.FastAutoAugment.data import  Augmentation
-        # from libs.FastAutoAugment.archive import fa_resnet50_rimagenet
-        if cfg['label_type'] == 'DIR':
-            cfg['label_path'] = cfg['train_path']
-
         train_loader = torch.utils.data.DataLoader(
                                         my_dataloader(input_data[0],
-                                            cfg['label_type'],
-                                            cfg['label_path'],
-                                            True,
+                                            cfg,
                                             transforms.Compose([
                                                 data_aug_train,
                                                 #ImageNetPolicy(),  #autoaug
@@ -229,102 +143,22 @@ def getDataLoader(mode, input_data, cfg):
                                                 transforms.ToTensor(),
                                                 my_normalize,
                                         ])),
-                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
+                                batch_size=cfg['batch_size'], 
+                                shuffle=True, 
+                                num_workers=cfg['num_workers'],
+                                pin_memory=True)
 
-        if cfg['val_path']:
-            cfg['label_path'] = cfg['val_path']
 
         val_loader = torch.utils.data.DataLoader(
                                         my_dataloader(input_data[1],
-                                            cfg['label_type'],
-                                            cfg['label_path'],
-                                            True,
+                                            cfg,
                                             transforms.Compose([
                                                 data_aug_test,
                                                 transforms.ToTensor(),
                                                 my_normalize
                                         ])),
-                                batch_size=cfg['batch_size'], shuffle=False, num_workers=cfg['num_workers'], pin_memory=True)
+                                batch_size=cfg['batch_size'], 
+                                shuffle=False, 
+                                num_workers=cfg['num_workers'], 
+                                pin_memory=True)
         return train_loader, val_loader
-
-
-    elif mode=="train":
-        my_dataloader = TensorDatasetTrainClassify
-        
-        #auto aug
-
-        #from .autoaugment import ImageNetPolicy
-        # from libs.FastAutoAugment.data import  Augmentation
-        # from libs.FastAutoAugment.archive import fa_resnet50_rimagenet
-        if cfg['label_type'] == 'DIR':
-            cfg['label_path'] = cfg['train_path']
-
-        train_loader = torch.utils.data.DataLoader(
-                                my_dataloader(input_data[0],
-                                            cfg['label_type'],
-                                            cfg['label_path'],
-                                            False,
-                                            transforms.Compose([
-                                                data_aug_test,
-                                                #ImageNetPolicy(),  #autoaug
-                                                #Augmentation(fa_resnet50_rimagenet()), #fastaa
-                                                transforms.ToTensor(),
-                                                my_normalize,
-                                                ])),
-                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
-
-        return train_loader
-
-    elif mode=="val":
-        my_dataloader = TensorDatasetTrainClassify
-        
-        #auto aug
-
-        #from .autoaugment import ImageNetPolicy
-        # from libs.FastAutoAugment.data import  Augmentation
-        # from libs.FastAutoAugment.archive import fa_resnet50_rimagenet
-        if cfg['label_type'] == 'DIR':
-            cfg['label_path'] = cfg['val_path']
-
-        data_loader = torch.utils.data.DataLoader(
-                                my_dataloader(input_data[0],
-                                            cfg['label_type'],
-                                            cfg['label_path'],
-                                            False,
-                                            transforms.Compose([
-                                                data_aug_test,
-                                                #ImageNetPolicy(),  #autoaug
-                                                #Augmentation(fa_resnet50_rimagenet()), #fastaa
-                                                transforms.ToTensor(),
-                                                my_normalize,
-                                                ])),
-                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
-
-        return data_loader
-
-    elif mode=="eval":
-        my_dataloader = TensorDatasetTrainClassify
-        
-        #auto aug
-
-        #from .autoaugment import ImageNetPolicy
-        # from libs.FastAutoAugment.data import  Augmentation
-        # from libs.FastAutoAugment.archive import fa_resnet50_rimagenet
-        if cfg['label_type'] == 'DIR':
-            cfg['label_path'] = cfg['eval_path']
-
-        data_loader = torch.utils.data.DataLoader(
-                                my_dataloader(input_data[0],
-                                            cfg['label_type'],
-                                            cfg['label_path'],
-                                            False,
-                                            transforms.Compose([
-                                                data_aug_test,
-                                                #ImageNetPolicy(),  #autoaug
-                                                #Augmentation(fa_resnet50_rimagenet()), #fastaa
-                                                transforms.ToTensor(),
-                                                my_normalize,
-                                                ])),
-                                batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], pin_memory=True)
-
-        return data_loader

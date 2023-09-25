@@ -14,69 +14,7 @@ from fire.runnertools import getSchedu, getOptimizer, getLossFunc
 from fire.runnertools import clipGradient
 from fire.metrics import getF1
 from fire.scheduler import GradualWarmupScheduler
-from fire.utils import printDash
-
-
-
-class FeatureExtractor():
-    #https://github.com/jacobgil/pytorch-grad-cam
-    """ Class for extracting activations and 
-    registering gradients from targetted intermediate layers """
-
-    def __init__(self, model, target_layers):
-        self.model = model
-        self.target_layers = target_layers
-        self.gradients = []
-
-    def save_gradient(self, grad):
-        self.gradients.append(grad)
-
-    def __call__(self, x):
-        outputs = []
-        self.gradients = []
-        # print(self.model._modules.items())
-        for name, module in self.model._modules.items():
-            # print(name, module)
-            x = module(x)
-            if name in self.target_layers:
-                # print(name, module, '111')
-                x.register_hook(self.save_gradient)
-                outputs += [x]
-        # b
-        return outputs, x
-
-
-class ModelOutputs():
-    """ Class for making a forward pass, and getting:
-    1. The network output.
-    2. Activations from intermeddiate targetted layers.
-    3. Gradients from intermeddiate targetted layers. """
-
-    def __init__(self, model, feature_module, target_layers):
-        self.model = model
-        self.feature_module = feature_module
-        self.feature_extractor = FeatureExtractor(self.feature_module, target_layers)
-
-    def get_gradients(self):
-        return self.feature_extractor.gradients
-
-    def __call__(self, x):
-        target_activations = []
-        print(len(self.model.features._modules.items()))
-        for name, module in self.model.features._modules.items():
-            if module == self.feature_module:
-                print(name, module)
-                target_activations, x = self.feature_extractor(x)
-            else:
-                x = module(x)
-
-            
-        
-        x = x.mean(3).mean(2)        #best 99919
-        x = self.model.classifier(x)
-        #bself.pretrain_model self.features self.classifier
-
-        return target_activations, x
+from fire.utils import printDash,firelog,delete_all_pycache_folders
 
 
 
@@ -86,10 +24,7 @@ class FireRunner():
 
         self.cfg = cfg
 
-        
-
-
-
+  
         if self.cfg['GPU_ID'] != '' :
             self.device = torch.device("cuda")
         else:
@@ -163,7 +98,7 @@ class FireRunner():
         self.onTrainEnd()
 
 
-    def predictRaw(self, data_loader):
+    def predict(self, data_loader, return_raw=False):
         self.model.eval()
         correct = 0
 
@@ -184,182 +119,12 @@ class FireRunner():
 
                 batch_pred_score = pred_score.data.cpu().numpy().tolist()
                 for i in range(len(batch_pred_score)):
-                    res_dict[os.path.basename(img_names[i])] = pred_score[i].cpu().numpy()
-
-        # pres = np.array(pres)
-
+                    if return_raw:
+                        res_dict[os.path.basename(img_names[i])] = pred_score[i].cpu().numpy()
+                    else:
+                        res_dict[os.path.basename(img_names[i])] = pred[i].item()
         return res_dict
 
-    def predict(self, data_loader):
-        self.model.eval()
-        correct = 0
-
-        res_dict = {}
-        with torch.no_grad():
-            # pres = []
-            # labels = []
-            for (data, img_names) in data_loader:
-                data = data.to(self.device)
-
-                output = self.model(data).double()
-
-
-                #print(output.shape)
-                pred_score = nn.Softmax(dim=1)(output)
-                #print(pred_score.shape)
-                pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
-
-                batch_pred_score = pred_score.data.cpu().numpy().tolist()
-                for i in range(len(batch_pred_score)):
-                    res_dict[os.path.basename(img_names[i])] = pred[i].item()
-
-        # pres = np.array(pres)
-
-        return res_dict
-
-    def heatmap(self, data_loader, save_dir, count):
-        print("[DEBUG] Not finish")
-        self.model.eval()
-        c = 0
-
-
-        res_dict = {}
-        # with torch.no_grad():
-
-        # x=torch.randn(3)
-        # x=torch.autograd.Variable(x,requires_grad=True)#生成变量
-        # print(x)#输出x的值
-        # y=x*2
-        # y = y.requires_grad_(True) 
-        # y.backward(torch.FloatTensor([1,0.1,0.01]))#自动求导
-        # print(x.grad)#求对x的梯度
-        # print(x)
-        # b
-
-        pres = []
-        labels = []
-        show = 1
-        for (data, img_names) in data_loader:
-            data = data.to(self.device)
-
-
-            features, output = self.extractor(data)
-            print(np.array(features).shape, features[0].shape)
-            print(output.shape)
-            # output = self.model(data).double()
-            if show:
-                print('output: ', output, img_names)
-                show = 0
-            # pred = nn.Softmax(dim=1)(output)
-            # print("pre: ", pred.cpu())
-
-
-            ###  grad-CAM
-            # print(self.model.features[12][0])
-            # b
-            # 利用onehot的形式锁定目标类别
-            one_hot = np.zeros((1, output.size()[-1]), dtype=np.float32)
-            one_hot[0][0] = 1
-            one_hot = torch.from_numpy(one_hot)
-            # 获取目标类别的输出,该值带有梯度链接关系,可进行求导操作
-            one_hot = torch.sum(one_hot.to(self.device) * output).requires_grad_(True) 
-            self.model.zero_grad()
-            one_hot.backward(retain_graph=True) # backward 求导
-            # 获取对应特征层的梯度map
-            #print(self.extractor.get_gradients().shape)
-            grads_val = self.extractor.get_gradients()[-1].cpu().data.numpy()
-            # grads_val = self.model.features[12][0].grad
-            print(grads_val.shape)
-            target = features[-1] # 获取目标特征输出
-            target = target.cpu().data.numpy()[0, :]
-
-            weights = np.mean(grads_val, axis=(2, 3))[0, :] # 利用GAP操作, 获取特征权重
-            cam = np.zeros(target.shape[1:], dtype=np.float32)
-            # relu操作,去除负值, 并缩放到原图尺寸
-            for i, w in enumerate(weights):
-                cam += w * target[i, :, :]
-
-            cam = np.maximum(cam, 0)
-            cam = cv2.resize(cam, data.shape[2:])
-            cam = cam - np.min(cam)
-            cam = cam / np.max(cam)
-            print(cam.shape)
-            print(cam[0][:10])
-
-            origin_img = cv2.imread(img_names[0])
-
-            heatmap = np.uint8(255 * cam)
-            heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-            cv2.imwrite(os.path.join(save_dir, "mask1_"+os.path.basename(img_names[0])), 
-                            heatmap)
-            # 0.4 here is a heatmap intensity factor
-            superimposed_img = heatmap * 0.4 + origin_img
-            # Save the image to disk
-            cv2.imwrite(os.path.join(save_dir, os.path.basename(img_names[0])), 
-                            superimposed_img)
-            
-
-            # print(self.model.features[:])
-            # b
-            # res
-            
-            # with torch.no_grad():
-            #     print('-------')
-            #     features = self.model.features[:13](data)
-            #     # out = self.model.features[13:](features)
-            #     # out = out.mean(3).mean(2)        #best 99919
-            #     # # print(out.shape)
-            #     # # b
-            #     # out = self.model.classifier(out)
-                
-            #     # print('output2', out)
-            #     weights = nn.functional.adaptive_avg_pool2d(features,(1,1))
-            #     weights_value = weights.cpu().numpy()
-            #     # weights_value = np.clip(weights_value,-1e-7, 1)
-            #     # weights_value = np.reshape(weights_value, (weights_value.shape[1],))
-            #     print(weights_value.shape)
-            #     #print(weights_value[0])
-
-            #     features_value = features.cpu().numpy()
-            #     print(weights_value.shape, features_value.shape)
-            #     print(features_value[0][0][0])
-            #     heatmap = weights_value*features_value
-
-            #     print(heatmap.shape, heatmap[0][0][0])
-            #     heatmap = np.mean(heatmap, axis = 1)
-            #     print(heatmap.shape, heatmap[0][0])
-            #     #b
-
-            #     heatmap = np.maximum(heatmap, 0)
-            #     heatmap = heatmap[0]
-                
-            #     #heatmap = np.reshape(heatmap, (heatmap.shape[1], heatmap.shape[2]))
-            #     #print(heatmap.shape )
-
-            #     origin_img = cv2.imread(img_names[0])
-            #     #print(origin_img.shape)
-            #     # We resize the heatmap to have the same size as the original image
-            #     heatmap = cv2.resize(heatmap, (origin_img.shape[1], origin_img.shape[0]))
-            #     # cv2.imwrite(os.path.join(save_dir, "mask0_"+os.path.basename(img_names[0])), 
-            #     #                 heatmap)
-            #     # We convert the heatmap to RGB
-            #     heatmap = np.uint8(255 * heatmap)
-            #     # cv2.imwrite(os.path.join(save_dir, "mask1_"+os.path.basename(img_names[0])), 
-            #     #                 heatmap)
-            #     # We apply the heatmap to the original image
-            #     heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-            #     cv2.imwrite(os.path.join(save_dir, "mask2_"+os.path.basename(img_names[0])), 
-            #                     heatmap)
-            #     # 0.4 here is a heatmap intensity factor
-            #     #superimposed_img = heatmap * 0.4 + origin_img
-
-            #     # Save the image to disk
-            #     # cv2.imwrite(os.path.join(save_dir, os.path.basename(img_names[0])), 
-            #     #                 superimposed_img)
-
-            c+=1
-            if c==count:
-                return
 
     def cleanData(self, data_loader, target_label, move_dir):
         """
@@ -393,6 +158,7 @@ class FireRunner():
                         os.rename(img_names[i], os.path.join(move_dir,img_name))
                         count += 1
         print("[INFO] Total: ",count)
+
 
     def evaluate(self, data_loader):
         self.model.eval()
@@ -441,13 +207,40 @@ class FireRunner():
             print('      precision: {:.5f}, recall: {:.5f}, f1_score: {:.5f}\n'.format(
                   precision, recall, f1_score))
 
+
+
+
+    def make_save_dir(self):
+        #exist_names = os.listdir(self.cfg['save_dir'])
+        #print(os.walk(self.cfg['save_dir']))
+        dirpath, dirnames, filenames = os.walk(self.cfg['save_dir']).__next__()
+        exp_nums = []
+        for name in dirnames:
+            if name[:3]=='exp':
+                try:
+                    expid = int(name[3:])
+                    exp_nums.append(expid)
+                except:
+                    continue
+        new_id = 0
+        if len(exp_nums)>0:
+            new_id = max(exp_nums)+1
+        exp_dir = os.path.join(self.cfg['save_dir'], 'exp'+str(new_id))
+
+        firelog("i", "save to %s" % exp_dir)
+        #if not os.path.exists(exp_dir):
+        os.makedirs(exp_dir)
+        os.system("cp -r fire %s/" % exp_dir)
+        delete_all_pycache_folders(exp_dir)
+        os.system("cp config.py %s/" % exp_dir)
+        return exp_dir
+
 ################
 
     def onTrainStart(self):
         
-
-        self.early_stop_value = 0
-        self.early_stop_dist = 0
+        self.last_best_value = 0
+        self.last_best_dist = 0
         self.last_save_path = None
 
         self.earlystop = False
@@ -456,6 +249,7 @@ class FireRunner():
         # log
         self.log_time = time.strftime('%Y-%m-%d_%H-%M-%S',time.localtime(time.time()))
 
+        self.exp_dir = self.make_save_dir()
 
     def onTrainStep(self,train_loader, epoch):
         
@@ -526,9 +320,10 @@ class FireRunner():
 
 
 
+
     def onTrainEnd(self):
-        save_name = 'last_g%s.pth' % (self.cfg['GPU_ID'])
-        self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
+        save_name = 'last.pt'
+        self.last_save_path = os.path.join(self.exp_dir, save_name)
         self.modelSave(self.last_save_path)
         
         del self.model
@@ -635,41 +430,33 @@ class FireRunner():
 
     def earlyStop(self, epoch):
         ### earlystop
-        if self.best_score>self.early_stop_value:
-            self.early_stop_value = self.best_score
-            self.early_stop_dist = 0
+        if self.best_score>self.last_best_value:
+            self.last_best_value = self.best_score
+            self.last_best_dist = 0
 
-        self.early_stop_dist+=1
-        if self.early_stop_dist>self.cfg['early_stop_patient']:
+        self.last_best_dist+=1
+        if self.last_best_dist>self.cfg['early_stop_patient']:
             self.best_epoch = epoch-self.cfg['early_stop_patient']+1
-            print("[INFO] Early Stop with patient %d , best is Epoch - %d :%f" % (self.cfg['early_stop_patient'],self.best_epoch,self.early_stop_value))
+            print("[INFO] Early Stop with patient %d , best is Epoch - %d :%f" % (self.cfg['early_stop_patient'],self.best_epoch,self.last_best_value))
             self.earlystop = True
         if  epoch+1==self.cfg['epochs']:
-            self.best_epoch = epoch-self.early_stop_dist+2
-            print("[INFO] Finish trainging , best is Epoch - %d :%f" % (self.best_epoch,self.early_stop_value))
+            self.best_epoch = epoch-self.last_best_dist+2
+            print("[INFO] Finish trainging , best is Epoch - %d :%f" % (self.best_epoch,self.last_best_value))
             self.earlystop = True
 
     def checkpoint(self, epoch):
         
-        if self.best_score<=self.early_stop_value:
-            if self.cfg['save_best_only']:
-                pass
-            else:
-                save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.best_score)
-                self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
-                self.modelSave(self.last_save_path)
+        if self.best_score<=self.last_best_value:
+            pass
         else:
-            if self.cfg['save_one_only']:
-                if self.last_save_path is not None and os.path.exists(self.last_save_path):
-                    os.remove(self.last_save_path)
-            save_name = '%s_e%d_%.5f.pth' % (self.cfg['model_name'],epoch+1,self.best_score)
-            self.last_save_path = os.path.join(self.cfg['save_dir'], save_name)
+            save_name = 'best.pt'
+            self.last_save_path = os.path.join(self.exp_dir, save_name)
             self.modelSave(self.last_save_path)
 
 
 
 
-    def modelLoad(self,model_path, data_parallel = True):
+    def modelLoad(self,model_path, data_parallel = False):
         self.model.load_state_dict(torch.load(model_path), strict=True)
         
         if data_parallel:

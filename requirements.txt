@@ -2,8 +2,8 @@ json
 numpy
 pandas
 opencv-python
-torch==1.8.2
-torchvisson==0.9.2
+torch
+torchvisson
 scikit-learn
 pretrainedmodels
-albumentations==1.1.0
+albumentations

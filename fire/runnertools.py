@@ -2,7 +2,7 @@ import os
 import time
 import torch
 import torch.optim as optim
-from fire.ranger import Ranger 
+
 from fire.loss import FocalLoss, CrossEntropyLoss,CrossEntropyLossV2
 
 
@@ -40,8 +40,8 @@ def getOptimizer(optims, model, learning_rate, weight_decay):
         optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay)
     elif optims=='AdaBelief':
         optimizer = AdaBelief(model.parameters(), lr=learning_rate, eps=1e-12, betas=(0.9,0.999))
-    elif optims=='Ranger':
-        optimizer = Ranger(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    # elif optims=='Ranger':
+    #     optimizer = Ranger(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     else:
         raise Exception("Unkown getSchedu: ", optims)
     return optimizer

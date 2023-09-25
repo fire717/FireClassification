@@ -70,7 +70,8 @@ class FireModel(nn.Module):
                 self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True) 
 
         
-        elif 'resnext' in self.cfg['model_name'] or \
+        elif 'resnet' in self.cfg['model_name'] or \
+                'resnext' in self.cfg['model_name'] or \
                 'xception' in self.cfg['model_name']:
             #model_name = 'resnext50' # se_resnext50_32x4d xception
             self.pretrain_model = pretrainedmodels.__dict__[self.cfg['model_name']](num_classes=1000, pretrained=None)
@@ -234,7 +235,8 @@ class FireModel(nn.Module):
                          nn.Linear(num_features,self.cfg['class_number']))
 
 
-        elif 'resnext' in self.cfg['model_name'] or \
+        elif 'resnet' in self.cfg['model_name'] or \
+                'resnext' in self.cfg['model_name'] or \
                 'xception' in self.cfg['model_name']:
             #self.avgpool = nn.AdaptiveAvgPool2d(1)
             #print(self.pretrain_model)
@@ -258,7 +260,7 @@ class FireModel(nn.Module):
 
             out = nn.functional.adaptive_avg_pool2d(out, 1).reshape(out.shape[0], -1)
             #nn.AdaptiveAvgPool2d(1)
-            out = self.head1(out)
+            out1 = self.head1(out)
             out = [out1] 
 
         elif "shuffle" in self.cfg['model_name']:
@@ -306,12 +308,13 @@ class FireModel(nn.Module):
 
             out = [out1]
 
-        elif 'resnext' in self.cfg['model_name'] or \
+        elif 'resnet' in self.cfg['model_name'] or \
+                'resnext' in self.cfg['model_name'] or \
                 'xception' in self.cfg['model_name']:
             out = self.pretrain_model(img)
             out = self.avgpool(out)
             out = out.view(out.size(0), -1)
-            out = self.head1(out)
+            out1 = self.head1(out)
             out = [out1]
         # [Add new model here]
         # elif self.cfg['model_name']=="xxx":
