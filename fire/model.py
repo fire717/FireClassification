@@ -9,7 +9,7 @@ from fire.models.myefficientnet_pytorch import EfficientNet
 from fire.models.convnext import convnext_tiny,convnext_small,convnext_base,convnext_large
 from fire.models.swin import build_model,get_config
 
-
+import timm
 import torchvision
 
 class FireModel(nn.Module):
@@ -29,8 +29,37 @@ class FireModel(nn.Module):
 
 
         ### Create model
+        if "efficientnetv2" in self.cfg['model_name']:
+            #model = EfficientNet.from_name(model_name)
+            if "v2-s" in self.cfg['model_name']:
+                self.pretrain_model = timm.create_model('tf_efficientnetv2_s.in21k_ft_in1k', pretrained=False)
+            elif "v2-b0" in self.cfg['model_name']:
+                self.pretrain_model = timm.create_model('tf_efficientnetv2_b0.in1k', pretrained=False)
 
-        if self.cfg['model_name']=="mobilenetv2":
+            if self.cfg['pretrained']:
+                self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True) 
+        
+
+        elif "eca_nfnet_l0" in self.cfg['model_name']:
+            self.pretrain_model = timm.create_model('eca_nfnet_l0.ra2_in1k', pretrained=False)
+            if self.cfg['pretrained']:
+                self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True) 
+        
+
+        elif "convnextv2" in self.cfg['model_name']:
+
+            if "tiny" in self.cfg['model_name']:
+                self.pretrain_model = timm.create_model('convnextv2_tiny.fcmae_ft_in22k_in1k_384', pretrained=True)
+            # if self.cfg['pretrained']:
+            #     self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True) 
+
+        elif "resnest" in self.cfg['model_name']:
+            if "50d" in self.cfg['model_name']:
+                self.pretrain_model = timm.create_model('resnest50d', 
+                                                        pretrained=False)
+
+
+        elif self.cfg['model_name']=="mobilenetv2":
             #model.cpu()
             self.pretrain_model = torchvision.models.mobilenet_v2(pretrained=False, progress=True, width_mult=1.0)
             
@@ -141,6 +170,11 @@ class FireModel(nn.Module):
                 self.pretrain_model = convnext_large()
                 if self.cfg['pretrained']:
                     self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained'])['model'],strict=False) 
+        
+
+        
+
+
         # [Add new model here]
         # elif self.cfg['model_name']=="xxx":
         #     pass
@@ -152,7 +186,30 @@ class FireModel(nn.Module):
 
     def changeModelStructure(self):
         ### Change model
-        if 'mobilenetv2' in self.cfg['model_name']:
+        if "efficientnetv2" in self.cfg['model_name']:
+            self.backbone = nn.Sequential(*list(self.pretrain_model.children())[:-1])
+            num_features = self.pretrain_model.classifier.in_features
+            self.head1 = nn.Linear(num_features,self.cfg['class_number'])
+
+        elif "convnextv2" in self.cfg['model_name']:
+            self.backbone = self.pretrain_model
+            num_features = self.backbone.head.fc.in_features
+            self.backbone.head.fc = nn.Linear(num_features,self.cfg['class_number'])
+            #print(self.backbone)
+     
+        elif "eca_nfnet_l0" in self.cfg['model_name']:
+            self.backbone = self.pretrain_model
+            #print(self.backbone)
+            num_features = self.backbone.head.fc.in_features
+            self.backbone.head.fc = nn.Linear(num_features,self.cfg['class_number'])
+            #bb
+
+        elif "resnest" in self.cfg['model_name']:
+            self.backbone = self.pretrain_model
+            num_features = self.backbone.fc.in_features
+            self.backbone.fc = nn.Linear(num_features,self.cfg['class_number'])
+
+        elif 'mobilenetv2' in self.cfg['model_name']:
 
             in_features = self.pretrain_model.classifier[1].in_features
             self.features = self.pretrain_model.features
@@ -280,6 +337,17 @@ class FireModel(nn.Module):
             out = out.view(out.size(0), -1)
             out1 = self.head1(out)
 
+            out = [out1]
+        
+        elif "resnest" in self.cfg['model_name']:
+            out1 = self.backbone(img)
+            #print(out1.shape)
+            out = [out1]
+
+
+        elif "convnextv2" in self.cfg['model_name'] or "eca_nfnet_l0"  in self.cfg['model_name']:
+            out1 = self.backbone(img)
+            #print(out1.shape)
             out = [out1]
 
         elif "convnext" in self.cfg['model_name']:

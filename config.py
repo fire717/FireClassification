@@ -2,7 +2,7 @@
 
 cfg = {
     ### Global Set
-    "model_name": "resnet50",  
+    "model_name": "resnest50d",  
     'GPU_ID': '0',
     "class_number": 10,
     "class_names": [], #str in list or [] for DIR label
@@ -48,7 +48,7 @@ cfg = {
     'warmup_epoch':0, # 
     'weight_decay' : 0,#0.0001,
     "k_flod":5,
-    'start_fold':0,
+    'val_fold':0,
     'early_stop_patient':7,
 
     'use_distill':0,

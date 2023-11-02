@@ -44,7 +44,7 @@ class FireData():
                 val_data += [[p,i] for p in img_path_list]
 
         else:
-            firelog('i',"val_path is none, use kflod to split data: k=%d start_fold=%d" % (self.cfg['k_flod'],self.cfg['start_fold']))
+            firelog('i',"val_path is none, use kflod to split data: k=%d val_fold=%d" % (self.cfg['k_flod'],self.cfg['val_fold']))
             all_data = train_data
 
             fold_count = int(len(all_data)/self.cfg['k_flod'])
