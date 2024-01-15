@@ -68,18 +68,9 @@ class FireData():
         return train_loader, val_loader
 
 
-    def getEvalDataloader(self):
-        data_names = getFileNames(self.cfg['eval_path'])
-        firelog('i',"Total images: "+str(len(data_names)))
-
-        input_data = [data_names]
-        data_loader = getDataLoader("eval", 
-                                        input_data,
-                                        self.cfg)
-        return data_loader
-
     def getTestDataloader(self):
         data_names = getFileNames(self.cfg['test_path'])
+        print("total ",len(data_names))
         input_data = [data_names]
         data_loader = getDataLoader("test", 
                                     input_data,

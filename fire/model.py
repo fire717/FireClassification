@@ -99,24 +99,24 @@ class FireModel(nn.Module):
             if self.cfg['pretrained']:
                 if self.cfg['model_name']=="resnet50":
                     #model.cpu()
-                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True)
+                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                     #fc_features = self.pretrain_model.last_linear.in_features 
                 elif self.cfg['model_name']=="xception":
-                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True)
+                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                     #fc_features = self.pretrain_model.last_linear.in_features 
                 elif self.cfg['model_name'] == "se_resnext50_32x4d":
-                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True)
+                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                     self.pretrain_model.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
                     #fc_features = self.pretrain_model.last_linear.in_features 
                 elif self.cfg['model_name'] == "se_resnext101_32x4d":
-                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True)
+                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                     self.pretrain_model.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
                     #fc_features = self.pretrain_model.last_linear.in_features 
                 elif self.cfg['model_name'] == "resnext101_32x8d_wsl":
-                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True)
+                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                     #fc_features = self.pretrain_model.fc.in_features 
                 elif self.cfg['model_name'] == "resnext101_32x16d_wsl":
-                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True)
+                    self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=False)
                     #fc_features = self.pretrain_model.fc.in_features 
                 else:
                     raise Exception("[ERROR] Not load pretrained model!")

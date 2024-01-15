@@ -108,7 +108,7 @@ class FireRunner():
             for (data, img_names) in data_loader:
                 data = data.to(self.device)
 
-                output = self.model(data).double()
+                output = self.model(data)[0]
 
 
                 #print(output.shape)
@@ -170,7 +170,7 @@ class FireRunner():
                 data, target = data.to(self.device), target.to(self.device)
                 #print(target.shape)
                 with torch.cuda.amp.autocast():
-                    output = self.model(data).double()
+                    output = self.model(data)[0]
 
                 # print(img_names)
                 # print(output)

@@ -22,7 +22,7 @@ def main(cfg):
     # data.showTrainData()
     # b
     
-    train_loader = data.getEvalDataloader()
+    _, val_loader = data.getTrainValDataloader()
 
 
     runner = FireRunner(cfg, model)
@@ -31,7 +31,7 @@ def main(cfg):
     runner.modelLoad(cfg['model_path'])
 
 
-    runner.evaluate(train_loader)
+    runner.evaluate(val_loader)
 
 
 

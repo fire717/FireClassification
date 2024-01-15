@@ -41,6 +41,7 @@ class TensorDatasetTrainClassify(Dataset):
     def __getitem__(self, index):
 
         img = cv2.imread(self.data[index][0])
+        img = cv2.resize(img, self.cfg['img_size'])
 
         if self.transform is not None:
             img = self.transform(img)
@@ -61,11 +62,12 @@ class TensorDatasetTestClassify(Dataset):
     def __init__(self, data, cfg, transform=None):
         self.data = data
         self.cfg = cfg
-        elf.transform = transform
+        self.transform = transform
 
     def __getitem__(self, index):
 
         img = cv2.imread(self.data[index])
+        img = cv2.resize(img, self.cfg['img_size'])
         #img = imgPaddingWrap(img)
         #b
         if self.transform is not None:
@@ -118,6 +120,7 @@ def getDataLoader(mode, input_data, cfg):
 
         test_loader = torch.utils.data.DataLoader(
                 my_dataloader(input_data[0],
+                                cfg,
                                 transforms.Compose([
                                     data_aug_test,
                                     transforms.ToTensor(),

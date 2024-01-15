@@ -2,8 +2,8 @@
 
 cfg = {
     ### Global Set
-    "model_name": "resnest50d",  
-    'GPU_ID': '0',
+    "model_name": "resnet50",  
+    'GPU_ID': '1',
     "class_number": 10,
     "class_names": [], #str in list or [] for DIR label
 
@@ -16,15 +16,7 @@ cfg = {
     'train_path':"./data/train",
     'val_path':"./data/val", #if '' mean use k_flod
     'pretrained':'', #path or ''
-    #shufflenetv2_x1-5666bf0f80.pth
-    #efficientnet-b0-355c32eb
-    #efficientnet-b1-f1951068
-    #efficientnet-b2-8bb594d6
-    #efficientnet-b3-5fb5a3c3
-    #efficientnet-b4-6ed6700e
-    #efficientnet-b5-b6417697
-    #efficientnet-b6-c76e70fd
-    #efficientnet-b7-dcc49843
+
 
     'try_to_train_items': 0,   # 0 means all, or run part(200 e.g.) for bug test
     'save_best_only': True,  #only save model if better than before
@@ -65,7 +57,7 @@ cfg = {
 
 
     ### Test
-    'model_path':'output/mobilenetv3_e11_0.93300.pth',#test model
+    'model_path':'output/exp2/best.pt',#test model
 
     'eval_path':"./data/test",#test with label,get eval result
     'test_path':"./data/test",#test without label, just show img result
