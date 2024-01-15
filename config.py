@@ -3,7 +3,7 @@
 cfg = {
     ### Global Set
     "model_name": "resnet50",  
-    'GPU_ID': '1',
+    'GPU_ID': '0',
     "class_number": 10,
     "class_names": [], #str in list or [] for DIR label
 
