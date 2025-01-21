@@ -1,7 +1,6 @@
 # FireClassification: Deep Learning Image Classification for lazy humans
 
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/fire717/Fire/blob/main/LICENSE) [<img src="https://api.gitsponsors.com/api/badge/img?id=316181417" height="20">](https://api.gitsponsors.com/api/badge/link?p=pJOBas/3VdH83Weyp4e5C8mODeUImGFOGO8MxbE1YQ/+J7gFZclw9KOFwk9zoDFhD2wXmh87BhZJQKpw6Z1BcSgB8h9w0w0S+D6RfbzhlSWTvdxFozRm70vOMlKw6MN5ETB4heWpSxUvbPwr7vMU5Q==)
-
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/fire717/Fire/blob/main/LICENSE) 
 ## 一、前言
 FireClassification is a deep learning Framework written in Python and used for Image Classification task, running on top of the machine learning platform Pytorch.
 
