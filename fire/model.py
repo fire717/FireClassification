@@ -87,8 +87,8 @@ class FireModel(nn.Module):
             self.pretrain_model = EfficientNet.from_name(self.cfg['model_name'].replace('adv-',''))
             if self.cfg['pretrained']:
                 ckpt = torch.load(self.cfg['pretrained'])
-                del ckpt["_fc.weight"]
-                del ckpt["_fc.bias"]
+                # del ckpt["_fc.weight"]
+                # del ckpt["_fc.bias"]
                 self.pretrain_model.load_state_dict(ckpt,strict=True) 
 
         
