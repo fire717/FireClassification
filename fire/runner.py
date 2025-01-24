@@ -229,9 +229,9 @@ class FireRunner():
         firelog("i", "save to %s" % exp_dir)
         #if not os.path.exists(exp_dir):
         os.makedirs(exp_dir)
-        os.system("cp -r fire %s/" % exp_dir)
-        delete_all_pycache_folders(exp_dir)
-        os.system("cp config.py %s/" % exp_dir)
+        # os.system("cp -r fire %s/" % exp_dir)
+        # delete_all_pycache_folders(exp_dir)
+        # os.system("cp config.py %s/" % exp_dir)
         return exp_dir
 
 ################
