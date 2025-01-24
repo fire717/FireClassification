@@ -34,7 +34,7 @@ cfg = {
     'learning_rate':0.001,
     'batch_size':64,
     'epochs':100,
-    'optimizer':'SGD',  #Adam  SGD AdaBelief Ranger
+    'optimizer':'Adam',  #Adam  SGD AdaBelief Ranger
     'scheduler':'default-0.1-3', #default  SGDR-5-2    step-4-0.8
 
     'warmup_epoch':0, # 
