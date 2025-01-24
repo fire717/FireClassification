@@ -86,7 +86,10 @@ class FireModel(nn.Module):
             #model = EfficientNet.from_name(model_name)
             self.pretrain_model = EfficientNet.from_name(self.cfg['model_name'].replace('adv-',''))
             if self.cfg['pretrained']:
-                self.pretrain_model.load_state_dict(torch.load(self.cfg['pretrained']),strict=True) 
+                ckpt = torch.load(self.cfg['pretrained'])
+                del ckpt["_fc.weight"]
+                del ckpt["_fc.bias"]
+                self.pretrain_model.load_state_dict(ckpt,strict=True) 
 
         
         elif 'resnet' in self.cfg['model_name'] or \
@@ -248,8 +251,9 @@ class FireModel(nn.Module):
 
         elif "efficientnet" in self.cfg['model_name']:
             #self.pretrain_model._dropout = nn.Dropout(0.5)
-            fc_features = self.pretrain_model._fc.in_features 
-            self.pretrain_model._fc = nn.Linear(fc_features,  self.cfg['class_number'])
+            self.backbone =  self.pretrain_model
+            num_features = self.backbone._bn1.num_features
+            self.head1 = nn.Linear(num_features,self.cfg['class_number'])
 
 
         elif "convnext" in self.cfg['model_name']:
