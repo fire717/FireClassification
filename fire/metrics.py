@@ -37,7 +37,42 @@ def getF1(pres, labels):
 
 
 def getMF1(pres, labels):
-    pass
+    count_all,class_num = pres.shape
+
+    tp_list = [0 for _ in range(class_num)]
+    fp_list = [0 for _ in range(class_num)]
+    fn_list = [0 for _ in range(class_num)]
+    
+    for i in range(count_all):
+        pre_id = np.argmax(pres[i])
+        gt_id = labels[i]
+        if pre_id == gt_id:
+            tp_list[gt_id] += 1
+        else:
+            fp_list[pre_id] += 1
+            fn_list[gt_id] += 1
+
+    f1_list = []
+    p_list = []
+    r_list = []
+    for i in range(class_num):
+        tp = tp_list[i]
+        fp = fp_list[i]
+        fn = fn_list[i]
+        precision = tp/(tp+fp+1e-7)
+        recall = tp/(tp+fn+1e-7)
+
+        f1_score = 2*recall*precision / (recall+precision+1e-7)
+   
+        p_list.append(precision)
+        r_list.append(recall)
+        f1_list.append(f1_score)
+
+    precision = np.mean(p_list) 
+    recall = np.mean(r_list) 
+    f1_score = np.mean(f1_list) 
+   
+    return precision, recall, f1_score
 
 ### mAP
 def vocAP(rec, prec, use_07_metric=False):
